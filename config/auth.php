@@ -42,7 +42,7 @@ return [
         ],
         'employee' => [
             'driver' => 'session',
-            'provider' => 'users',
+            'provider' => 'employees',
         ],
     ],
 
@@ -63,11 +63,20 @@ return [
     |
     */
 
+    // app/config/auth.php
+
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', App\Models\User::class),
         ],
+
+        // Tambahkan provider 'employees' ini
+        'employees' => [
+            'driver' => 'eloquent',
+            'model' => env('AUTH_MODEL', App\Models\User::class), // Kita asumsikan modelnya tetap User
+        ],
+    
 
         // 'users' => [
         //     'driver' => 'database',

@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Tambahkan aturan ini untuk menyembunyikan elemen modal secara instan */
+[x-cloak] {
+    display: none !important;
+}
+
 /* Definisikan keyframe untuk animasi */
 @keyframes marquee {
   0% { transform: translateX(0%); }

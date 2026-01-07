@@ -24,12 +24,13 @@ class Order extends Model
         'customer_phone',
         'order_type',
         'payment_method',
-        'is_offline', // <--- TAMBAHKAN INI
+        'is_offline',
         'status',
         'delivery_address',
         'delivery_notes',
-        'qr_code_path',   // <--- TAMBAHKAN INI
-        'is_qr_verified', // <--- TAMBAHKAN INI
+        'qr_code_path',
+        'pickup_pin',
+        'is_qr_verified',
         'subtotal_amount',
         'discount_amount',
         'delivery_fee',
@@ -46,8 +47,8 @@ class Order extends Model
      */
     protected $casts = [
         'delivered_at' => 'datetime',
-        'is_offline' => 'boolean',     // <--- TAMBAHKAN INI
-        'is_qr_verified' => 'boolean', // <--- TAMBAHKAN INI
+        'is_offline' => 'boolean',
+        'is_qr_verified' => 'boolean',
     ];
 
     /**
@@ -88,5 +89,25 @@ class Order extends Model
     public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+    
+    /**
+     * Aksesor untuk mendapatkan status yang ramah pengguna.
+     * Mengubah status teknis dari database menjadi string yang mudah dibaca pelanggan.
+     */
+    public function getUserFriendlyStatusAttribute(): string
+    {
+        return match ($this->status) {
+            'pending' => 'Pesanan Diterima',
+            'accepted' => 'Sedang Diproses',
+            'ready_for_pickup' => 'Pesanan Siap Diambil',
+            'on_delivery' => 'Sedang Diantar',
+            'delivered' => 'Pesanan Tiba',
+            'completed' => 'Pesanan Selesai',
+            'cancelled' => 'Dibatalkan',
+            'failed' => 'Gagal Dikirim',
+            'refunded' => 'Refunded',
+            default => 'Status Tidak Diketahui',
+        };
     }
 }

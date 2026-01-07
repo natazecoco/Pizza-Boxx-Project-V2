@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Widgets\OrderStats;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -16,6 +17,7 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\HtmlString;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 // Import Models
@@ -41,9 +43,56 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            
+            //Logo di Tab Browser
+            ->favicon(asset('images/pizza-boxx-logo.png'))
+
+            // Sidebar
+            // Tambahkan atau sesuaikan pengaturan sidebar
+            ->sidebarWidth('16rem') // Misalnya, 18rem. Default biasanya 16rem.
+            // ->collapsedSidebarWidth('36rem') // Misalnya, 5rem. Default biasanya 4rem.
+
+            // Logo Universal (semua halaman)
+                
+            // ->brandLogo(asset('images/pizza-boxx-logo.png'))
+            
+            // atau
+
+            // Opsi Brand Logo dengan teks
+            // ->brandLogo(fn () => new HtmlString(
+            //     '<div class="flex items-center justify-center gap-4">
+            //         <img src="' . asset('images/pizza-boxx-logo.png') . '" alt="Pizza Boxx Logo" class="h-10 w-10" />
+            //         <span class="font-bold text-lg">Pizza Boxx Admin Panel</span>
+            //     </div>'
+            // ))
+
+            // Opsi Brand Logo Height
+            ->brandLogoHeight('4rem') // Opsi Brand Logo Height
+
+            // Logo dipisahkan antara halaman login dan halaman lainnya
+            ->brandLogo(fn () => new HtmlString(
+                '<div class="flex items-center justify-center gap-4">
+                    <img src="' . asset('images/pizza-boxx-logo.png') . '" 
+                    alt="Pizza Boxx Logo" 
+                    class="' . (request()->routeIs('filament.admin.auth.login') ? 'h-16 w-16' : 'h-10 w-10') . '" />
+                    ' . (!request()->routeIs('filament.admin.auth.login') ? 
+                    '<span class="font-bold text-lg">Admin Panel</span>' : '') . '
+                </div>'
+            ))
+
+            // ->brandName('Pizza Boxx Admin') //Opsi Brand Name
+
+            ->brandName(fn () => new HtmlString(
+            '<div class="flex flex-col items-center justify-center gap-16">
+                <img src="' . asset('images/pizza-boxx-logo.png') . '" alt="Pizza Boxx Logo" class="h-10 w-10" />
+                <span class="font-bold text-lg">Pizza Boxx</span>
+            </div>'
+            )) // Opsi Brand Name
             ->colors([
                 'primary' => Color::Red,
+                'secondary' => Color::hex('#FFC107'), // kuning keju
             ])
+            ->sidebarCollapsibleOnDesktop() // sidebar bisa collapse
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
@@ -53,6 +102,7 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([
                 Widgets\AccountWidget::class,
                 Widgets\FilamentInfoWidget::class,
+                OrderStats::class,
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -65,9 +115,13 @@ class AdminPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])
-            ->authMiddleware([
-                Authenticate::class,
-            ])
+            // ->authMiddleware([
+            //     Authenticate::class,
+            // ])
+
+            // Perbaikan ada di sini:
+            ->authGuard('employee')
+
             ->navigationGroups(array_filter([
                 (auth()->check() && auth()->user()->hasRole('admin')) ? NavigationGroup::make('Manajemen Pusat')->items([
                     NavigationItem::make('Dashboard')

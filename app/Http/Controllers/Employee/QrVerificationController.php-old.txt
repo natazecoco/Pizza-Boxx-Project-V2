@@ -1,0 +1,56 @@
+<?php
+
+namespace App\Http\Controllers\Employee;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use App\Models\Order;
+use Illuminate\Support\Facades\Log;
+
+class QrVerificationController extends Controller
+{
+    /**
+     * Menampilkan formulir untuk verifikasi QR.
+     */
+    public function showForm(Request $request)
+    {
+        return view('pages.pegawai.verify');
+    }
+
+    /**
+     * Memproses verifikasi QR.
+     */
+    public function verify(Request $request)
+    {
+        $validatedData = $request->validate([
+            'qr_code' => 'required|string',
+        ]);
+        
+        $qrCodeData = $validatedData['qr_code'];
+
+        // Asumsi format QR adalah: "ORDER-{order_id}-{random_string}"
+        $parts = explode('-', $qrCodeData);
+        $orderId = $parts[1] ?? null;
+
+        if (!$orderId) {
+            return back()->with('error', 'Kode QR tidak valid.');
+        }
+
+        $order = Order::find($orderId);
+        
+        if (!$order) {
+            return back()->with('error', 'Pesanan tidak ditemukan.');
+        }
+
+        // Periksa apakah order sudah diverifikasi atau dibatalkan
+        if ($order->status === 'completed' || $order->status === 'cancelled') {
+            return back()->with('error', 'Pesanan ini sudah tidak bisa diverifikasi.');
+        }
+
+        // Ubah status pesanan menjadi 'completed' dan simpan
+        $order->status = 'completed';
+        $order->save();
+
+        return back()->with('success', 'Verifikasi berhasil! Status pesanan diubah menjadi "completed".');
+    }
+}

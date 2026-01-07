@@ -31,7 +31,7 @@ return new class extends Migration
             $table->string('customer_phone'); // Nomor telepon pelanggan (wajib)
 
             $table->enum('order_type', ['delivery', 'pickup']); // Tipe pesanan (delivery atau pickup)
-            $table->enum('payment_method', ['online', 'cash_on_delivery', 'card_on_pickup']); // Metode pembayaran
+            $table->enum('payment_method', ['online', 'cash_on_delivery', 'cash_on_pickup', 'card_on_pickup']); // Metode pembayaran
             $table->enum('status', [
                 'pending',        // Menunggu konfirmasi toko / pembayaran
                 'accepted',       // Pesanan diterima toko
