@@ -57,6 +57,12 @@ class LocationResource extends Resource
                     ->numeric()
                     ->nullable()
                     ->label('Longitude (Garis Bujur)'),
+                TextInput::make('maps_url')
+                    ->label('Link Google Maps')
+                    ->url() // Validasi format URL
+                    ->placeholder('https://maps.app.goo.gl/...')
+                    ->columnSpanFull() // Biar panjang ke samping
+                    ->nullable(),
                 TextInput::make('delivery_radius_km')
                     ->numeric()
                     ->default(5)
@@ -67,9 +73,6 @@ class LocationResource extends Resource
                     ->prefix('Rp ')
                     ->label('Biaya Pengantaran')
                     ->default(0),
-                TextColumn::make('delivery_fee')
-                    ->money('IDR')
-                    ->label('Ongkir'),
                 // --- AKHIR TAMBAHAN FIELD ---
             ]);
     }
@@ -95,6 +98,17 @@ class LocationResource extends Resource
                     ->label('Long'),
                 TextColumn::make('delivery_radius_km') // Tambahkan kolom di tabel
                     ->label('Radius (KM)'),
+                TextColumn::make('maps_url')
+                    ->label('Link Maps')
+                    ->icon('heroicon-m-map')
+                    ->color('primary')
+                    ->limit(20)
+                    ->openUrlInNewTab(), // Kalau diklik di tabel, langsung buka tab baru
+
+                TextColumn::make('delivery_fee')
+                    ->label('Ongkir')
+                    ->money('IDR') // Format mata uang Rupiah
+                    ->sortable(),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

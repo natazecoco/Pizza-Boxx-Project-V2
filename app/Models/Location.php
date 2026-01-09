@@ -25,7 +25,8 @@ class Location extends Model
         'latitude',
         'longitude',
         'delivery_radius_km',
-        'delivery_fee', // <--- TAMBAHKAN INI
+        'delivery_fee',
+        'maps_url',
     ];
 
     /**

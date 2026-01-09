@@ -230,7 +230,11 @@
                                 class="w-full pl-10 p-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-800 focus:ring-pizza-red focus:border-pizza-red appearance-none transition-colors">
                                 <option value="">Pilih Lokasi</option>
                                 @foreach($locations as $location)
-                                    <option value="{{ $location->id }}" data-lat="{{ $location->latitude }}" data-lng="{{ $location->longitude }}" {{ old('location_id') == $location->id ? 'selected' : '' }}>
+                                    <option value="{{ $location->id }}" 
+                                        data-lat="{{ $location->latitude }}" 
+                                        data-lng="{{ $location->longitude }}" 
+                                        data-map-url="{{ $location->maps_url }}" 
+                                        {{ old('location_id') == $location->id ? 'selected' : '' }}>
                                         {{ $location->name }} ({{ $location->address }})
                                     </option>
                                 @endforeach
@@ -276,7 +280,7 @@
                 </p>
             </div>
 
-            <!-- Delivery Details Section -->
+            <!-- Details Section -->
             <div id="delivery_details" class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
                 
                 <!-- Delivery Details Header -->
@@ -349,6 +353,32 @@
                         <input type="hidden" name="delivery_fee" id="delivery_fee_input" value="0">
                     </div>
                 </div>
+
+                <!-- Pickup Store Details -->
+                <div id="pickup_store_details" class="hidden mt-4">
+                    <div class="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                        <h4 class="text-lg font-bold text-gray-800 mb-2">
+                            <i class="fas fa-store text-pizza-red mr-2"></i>
+                            Detail Toko
+                        </h4>
+
+                        <p id="store_name" class="font-medium text-gray-800">-</p>
+                        <p id="store_address" class="text-sm text-gray-600">-</p>
+
+                        <a id="store_map"
+                        href="#"
+                        target="_blank"
+                        class="inline-flex items-center mt-3 text-pizza-red font-medium hover:underline">
+                            <i class="fas fa-map-location-dot mr-2"></i>
+                            Lihat di Google Maps
+                        </a>
+
+                        <p class="mt-3 text-sm text-gray-500">
+                            Silakan datang ke toko dan sebutkan <b>PIN Pickup</b> saat pengambilan pesanan.
+                        </p>
+                    </div>
+                </div>
+
             </div>
 
             <!-- // Promo Code Section -->
@@ -432,120 +462,232 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const cartTotal = parseFloat('{{ $cartTotal }}');
-            
-            // DOM Elements
-            const elements = {
+
+            /* ================== DOM ELEMENTS ================== */
+            const el = {
                 orderTypeDelivery: document.getElementById('order_type_delivery'),
                 orderTypePickup: document.getElementById('order_type_pickup'),
                 deliveryDetails: document.getElementById('delivery_details'),
-                deliveryAddressInput: document.getElementById('delivery_address'),
-                locationIdSelect: document.getElementById('location_id'),
+                deliveryAddress: document.getElementById('delivery_address'),
+                locationId: document.getElementById('location_id'),
                 locationStatus: document.getElementById('location_status'),
-                submitBtn: document.querySelector('button[type="submit"]'),
+                latitude: document.getElementById('latitude_input'),
+                longitude: document.getElementById('longitude_input'),
+
+                pickupStoreDetails: document.getElementById('pickup_store_details'),
+                addressLabel: document.getElementById('address_label'),
+                section4Title: document.getElementById('section4_title'),
+                deliveryNotes: document.getElementById('delivery_notes_container'),
+                deliveryFeeSection: document.getElementById('delivery_fee_section'),
+
+                subtotalDisplay: document.getElementById('subtotal_display'),
+                subtotalInput: document.getElementById('subtotal_amount_input'),
+
                 deliveryFeeDisplay: document.getElementById('delivery_fee_display'),
-                deliveryFeeInput: document.getElementById('delivery_fee_input'),
                 deliveryFeeSummary: document.getElementById('delivery_fee_summary_display'),
+                deliveryFeeInput: document.getElementById('delivery_fee_input'),
+
+                discountInput: document.getElementById('discount_amount_input'),
+                discountDisplay: document.getElementById('discount_display'),
+
                 finalTotalDisplay: document.getElementById('final_total_display'),
                 totalAmountInput: document.getElementById('total_amount_input'),
-                discountAmountInput: document.getElementById('discount_amount_input'),
+
+                promoCode: document.getElementById('promo_code'),
+                applyPromoBtn: document.getElementById('apply_promo_btn'),
+                promoMessage: document.getElementById('promo_message'),
+
+                paymentOptions: document.getElementById('payment_options'),
+                submitBtn: document.querySelector('button[type="submit"]'),
+
                 modal: document.getElementById('location-modal'),
                 modalMsg: document.getElementById('modal-message'),
                 modalTimer: document.getElementById('modal-countdown')
             };
 
+            /* ================== INIT ================== */
+            el.subtotalDisplay.textContent = `Rp ${cartTotal.toLocaleString('id-ID')}`;
+            el.subtotalInput.value = cartTotal;
+
+            /* ================== TOTAL ================== */
             function updateFinalTotal() {
-                const discount = parseFloat(elements.discountAmountInput.value) || 0;
-                const fee = parseFloat(elements.deliveryFeeInput.value) || 0;
-                const final = cartTotal - discount + fee;
-                elements.finalTotalDisplay.textContent = `Rp ${final.toLocaleString('id-ID')}`;
-                elements.totalAmountInput.value = final;
+                const subtotal = parseFloat(el.subtotalInput.value) || 0;
+                const discount = parseFloat(el.discountInput.value) || 0;
+                const fee = parseFloat(el.deliveryFeeInput.value) || 0;
+
+                const total = subtotal - discount + fee;
+                el.finalTotalDisplay.textContent = `Rp ${total.toLocaleString('id-ID')}`;
+                el.totalAmountInput.value = total;
             }
 
             function updateDeliveryFee(fee) {
-                elements.deliveryFeeInput.value = fee;
-                elements.deliveryFeeDisplay.textContent = `Rp ${fee.toLocaleString('id-ID')}`;
-                elements.deliveryFeeSummary.textContent = `Rp ${fee.toLocaleString('id-ID')}`;
+                el.deliveryFeeInput.value = fee;
+                el.deliveryFeeDisplay.textContent = `Rp ${fee.toLocaleString('id-ID')}`;
+                el.deliveryFeeSummary.textContent = `Rp ${fee.toLocaleString('id-ID')}`;
                 updateFinalTotal();
             }
 
-            function getAndValidateLocation() {
-                if (!elements.locationIdSelect.value) {
-                    elements.locationStatus.innerHTML = '<span class="text-orange-500">Pilih lokasi toko dulu!</span>';
+            /* ================== PAYMENT ================== */
+            function renderPayment(type) {
+                el.paymentOptions.innerHTML = type === 'delivery'
+                    ? `
+                    <label><input type="radio" name="payment_method" value="cash_on_delivery" checked> Tunai ke Kurir</label>
+                    `
+                    : `
+                    <label><input type="radio" name="payment_method" value="cash_on_pickup" checked> Tunai di Kasir</label>
+                    <label><input type="radio" name="payment_method" value="card_on_pickup"> Kartu</label>
+                    `;
+            }
+
+            /* ================== LOCATION (SERVER VALIDATION) ================== */
+            function validateLocation() {
+                if (!el.locationId.value) {
+                    el.locationStatus.innerHTML = '<span class="text-orange-500">Pilih lokasi toko</span>';
                     return;
                 }
 
-                if (navigator.geolocation) {
-                    elements.locationStatus.innerHTML = '<span class="spinner"></span> Menghitung jarak ke toko...';
-                    
-                    navigator.geolocation.getCurrentPosition((position) => {
-                        const coords = {
-                            location_id: elements.locationIdSelect.value,
-                            latitude: position.coords.latitude,
-                            longitude: position.coords.longitude
-                        };
+                if (!navigator.geolocation) return;
 
-                        fetch('{{ url("/api/check-delivery") }}', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                            },
-                            body: JSON.stringify(coords)
+                el.locationStatus.innerHTML = '<span class="spinner"></span> Mengecek jarak...';
+
+                navigator.geolocation.getCurrentPosition(pos => {
+                    fetch('/api/check-delivery', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            location_id: el.locationId.value,
+                            latitude: pos.coords.latitude,
+                            longitude: pos.coords.longitude
                         })
-                        .then(res => res.json())
-                        .then(data => {
-                            if (!data.allowed) {
-                                // JIKA DI LUAR RADIUS
-                                elements.modalMsg.innerHTML = data.message;
-                                elements.modal.classList.remove('hidden');
-                                
-                                let count = 5;
-                                elements.modalTimer.innerText = count;
-                                const timer = setInterval(() => {
-                                    count--;
-                                    elements.modalTimer.innerText = count;
-                                    if (count <= 0) {
-                                        clearInterval(timer);
-                                        closeLocationModal();
-                                        elements.orderTypePickup.checked = true;
-                                        updateVisibility();
-                                    }
-                                }, 1000);
-                            } else {
-                                // JIKA MASUK RADIUS
-                                elements.deliveryAddressInput.value = "Lokasi Terverifikasi GPS";
-                                document.getElementById('latitude_input').value = coords.latitude;
-                                document.getElementById('longitude_input').value = coords.longitude;
-                                updateDeliveryFee(data.delivery_fee);
-                                elements.locationStatus.innerHTML = `<span class="text-green-600 font-bold">${data.message}</span>`;
-                            }
-                        })
-                        .catch(() => {
-                            elements.locationStatus.innerHTML = '<span class="text-red-500">API Error. Pastikan rute /api/check-delivery sudah ada.</span>';
-                        });
-                    }, () => {
-                        elements.locationStatus.innerHTML = '<span class="text-red-500">Gagal akses GPS. Gunakan metode Pickup.</span>';
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (!data.allowed) {
+                            el.modalMsg.innerHTML = data.message;
+                            el.modal.classList.remove('hidden');
+
+                            let c = 5;
+                            el.modalTimer.innerText = c;
+                            const t = setInterval(() => {
+                                if (--c <= 0) {
+                                    clearInterval(t);
+                                    closeLocationModal();
+                                    el.orderTypePickup.checked = true;
+                                    updateVisibility();
+                                }
+                                el.modalTimer.innerText = c;
+                            }, 1000);
+                        } else {
+                            el.latitude.value = pos.coords.latitude;
+                            el.longitude.value = pos.coords.longitude;
+                            el.deliveryAddress.value = 'Lokasi terverifikasi GPS';
+                            updateDeliveryFee(data.delivery_fee);
+                            el.locationStatus.innerHTML = `<span class="text-green-600">${data.message}</span>`;
+                        }
                     });
-                }
+                });
             }
 
+            /* ================== VISIBILITY ================== */
             function updateVisibility() {
-                if (elements.orderTypeDelivery.checked) {
-                    elements.deliveryDetails.classList.remove('hidden');
-                    getAndValidateLocation();
+                if (el.orderTypeDelivery.checked) {
+                    // Delivery Selected
+                    el.section4Title.textContent = 'Detail Pengiriman';
+                    // el.deliveryDetails.classList.remove('hidden');
+
+                    el.deliveryAddress.parentElement.parentElement.classList.remove('hidden');
+                    el.locationStatus.classList.remove('hidden');
+                    el.deliveryNotes.classList.remove('hidden');
+                    el.deliveryFeeSection.classList.remove('hidden');
+
+                    // PICKUP: sembunyikan
+                    el.pickupStoreDetails.classList.add('hidden');
+                    renderPayment('delivery');
+                    validateLocation();
+
                 } else {
-                    elements.deliveryDetails.classList.add('hidden');
+                    // el.deliveryDetails.classList.add('hidden');
+                    el.section4Title.textContent = 'Detail Pickup';
+
+                    // DELIVERY: sembunyikan
+                    el.deliveryAddress.parentElement.parentElement.classList.add('hidden');
+                    el.locationStatus.classList.add('hidden');
+                    el.deliveryNotes.classList.add('hidden');
+                    el.deliveryFeeSection.classList.add('hidden');
+
+                    // PICKUP: tampilkan
+                    el.pickupStoreDetails.classList.remove('hidden');
+
                     updateDeliveryFee(0);
+                    renderPayment('pickup');
+                    fillPickupStoreInfo();
                 }
             }
 
-            elements.orderTypeDelivery.addEventListener('change', updateVisibility);
-            elements.orderTypePickup.addEventListener('change', updateVisibility);
-            elements.locationIdSelect.addEventListener('change', updateVisibility);
+            function fillPickupStoreInfo() {
+                const selected = el.locationId.options[el.locationId.selectedIndex];
+                if (!selected.value) return;
 
-            // Jalankan awal
+                const name = selected.text.split('(')[0].trim();
+                const address = selected.text.split('(')[1]?.replace(')', '') || '';
+
+                // AMBIL DATA DARI TITIPAN HTML TADI
+                const dbMapUrl = selected.getAttribute('data-map-url');
+
+                document.getElementById('store_name').textContent = name;
+                document.getElementById('store_address').textContent = address;
+
+                // Pasang linknya ke tombol maps
+                const mapBtn = document.getElementById('store_map');
+                
+                if (dbMapUrl && dbMapUrl !== "null" && dbMapUrl !== "") {
+                    // Jika di Admin Panel sudah diisi, pakai link resmi itu
+                    mapBtn.href = dbMapUrl;
+                } else {
+                    // Jika belum diisi, pakai cara cadangan (search manual)
+                    mapBtn.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selected.text)}`;
+                }
+            }
+
+
+            /* ================== PROMO ================== */
+            el.applyPromoBtn.addEventListener('click', () => {
+                fetch('/api/validate-promo', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        promo_code: el.promoCode.value,
+                        subtotal: el.subtotalInput.value
+                    })
+                })
+                .then(r => r.json())
+                .then(d => {
+                    if (!d.success) {
+                        el.discountInput.value = 0;
+                        el.discountDisplay.textContent = '- Rp 0';
+                        el.promoMessage.textContent = d.message;
+                        return updateFinalTotal();
+                    }
+                    el.discountInput.value = d.discount_amount;
+                    el.discountDisplay.textContent = `- Rp ${d.discount_amount.toLocaleString('id-ID')}`;
+                    el.promoMessage.textContent = 'Promo diterapkan';
+                    updateFinalTotal();
+                });
+            });
+
+            /* ================== EVENTS ================== */
+            el.orderTypeDelivery.addEventListener('change', updateVisibility);
+            el.orderTypePickup.addEventListener('change', updateVisibility);
+            el.locationId.addEventListener('change', updateVisibility);
+
             updateVisibility();
         });
 
@@ -553,5 +695,6 @@
             document.getElementById('location-modal').classList.add('hidden');
         }
     </script>
+
 </body>
 </html>
