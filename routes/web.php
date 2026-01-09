@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 // Gunakan Controller yang tidak masuk ke dalam sub-folder
 use App\Http\Controllers\AuthController;
 
+
 // Gunakan semua Controller Pelanggan dari folder Customer
 use App\Http\Controllers\Customer\HomeController;
 use App\Http\Controllers\Customer\MenuController;

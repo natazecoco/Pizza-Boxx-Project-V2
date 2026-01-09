@@ -34,6 +34,59 @@ class CheckoutController extends Controller
     }
 
     /**
+     * API untuk cek pengantaran berdasarkan lokasi dan radius.
+     */
+    public function checkDelivery(Request $request)
+    {
+        $request->validate([
+            'location_id' => 'required|exists:locations,id',
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
+        ]);
+
+        $location = Location::findOrFail($request->location_id);
+
+        $distance = $this->haversine(
+            $request->latitude,
+            $request->longitude,
+            $location->latitude,
+            $location->longitude
+        );
+
+        // Gunakan nama kolom sesuai database kamu (delivery_radius_km atau delivery_radius)
+        if ($distance > $location->delivery_radius_km) {
+            return response()->json([
+                'allowed' => false,
+                'distance' => round($distance, 2),
+                'message' => "Maaf, jarak Anda " . round($distance, 2) . " km, melebihi radius maksimal " . $location->delivery_radius_km . " km."
+            ]);
+        }
+
+        return response()->json([
+            'allowed' => true,
+            'distance' => round($distance, 2),
+            'delivery_fee' => $location->delivery_fee,
+            'message' => "Kabar baik! Jarak Anda (" . round($distance, 2) . " km) masuk jangkauan."
+        ]);
+    }
+
+    /**
+     * Helper Rumus Haversine
+     */
+    private function haversine($lat1, $lon1, $lat2, $lon2)
+    {
+        $R = 6371; // Radius bumi dalam KM
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+
+        $a = sin($dLat/2) ** 2 +
+            cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+            sin($dLon/2) ** 2;
+
+        return $R * (2 * atan2(sqrt($a), sqrt(1-$a)));
+    }
+
+    /**
      * Memproses pesanan dari halaman checkout.
      */
     public function process(Request $request)
@@ -75,8 +128,8 @@ class CheckoutController extends Controller
             $c = 2 * atan2(sqrt($a), sqrt(1-$a));
             $distance = $earthRadius * $c;
 
-            if ($distance > 2) { // Radius 2 KM sesuai aturan bisnis kamu
-                return redirect()->back()->withInput()->with('error', 'Maaf, lokasi Anda berada di luar radius pengantaran kami ('.round($distance, 2).' km).');
+            if ($distance > $store->delivery_radius_km) { 
+                return redirect()->back()->withInput()->with('error', 'Maaf, lokasi Anda berada di luar radius pengantaran cabang ini ('.round($distance, 2).' km).');
             }
         }
 

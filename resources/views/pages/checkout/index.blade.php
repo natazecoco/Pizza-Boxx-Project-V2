@@ -433,340 +433,124 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Data yang diteruskan dari Laravel Blade
             const cartTotal = parseFloat('{{ $cartTotal }}');
+            
+            // DOM Elements
+            const elements = {
+                orderTypeDelivery: document.getElementById('order_type_delivery'),
+                orderTypePickup: document.getElementById('order_type_pickup'),
+                deliveryDetails: document.getElementById('delivery_details'),
+                deliveryAddressInput: document.getElementById('delivery_address'),
+                locationIdSelect: document.getElementById('location_id'),
+                locationStatus: document.getElementById('location_status'),
+                submitBtn: document.querySelector('button[type="submit"]'),
+                deliveryFeeDisplay: document.getElementById('delivery_fee_display'),
+                deliveryFeeInput: document.getElementById('delivery_fee_input'),
+                deliveryFeeSummary: document.getElementById('delivery_fee_summary_display'),
+                finalTotalDisplay: document.getElementById('final_total_display'),
+                totalAmountInput: document.getElementById('total_amount_input'),
+                discountAmountInput: document.getElementById('discount_amount_input'),
+                modal: document.getElementById('location-modal'),
+                modalMsg: document.getElementById('modal-message'),
+                modalTimer: document.getElementById('modal-countdown')
+            };
 
-            // Haversine formula to calculate distance between two coordinates
-            function haversineDistance(lat1, lon1, lat2, lon2) {
-                const R = 6371; // Radius bumi dalam KM
-                const dLat = (lat2 - lat1) * Math.PI / 180;
-                const dLon = (lon2 - lon1) * Math.PI / 180;
-                const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                        Math.sin(dLon / 2) * Math.sin(dLon / 2);
-                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-                return R * c;
-            }
-            
-            // DOM elements
-            const orderTypeDelivery = document.getElementById('order_type_delivery');
-            const orderTypePickup = document.getElementById('order_type_pickup');
-            const deliveryDetails = document.getElementById('delivery_details');
-            const deliveryAddressInput = document.getElementById('delivery_address');
-            const paymentOptions = document.getElementById('payment_options');
-            const deliveryFeeDisplay = document.getElementById('delivery_fee_display');
-            const deliveryFeeInput = document.getElementById('delivery_fee_input');
-            const deliveryFeeSummaryDisplay = document.getElementById('delivery_fee_summary_display');
-            const locationStatus = document.getElementById('location_status');
-            const orderTypeMessage = document.getElementById('order_type_message');
-            const latitudeInput = document.getElementById('latitude_input');
-            const longitudeInput = document.getElementById('longitude_input');
-            const deliveryOptionLabel = document.getElementById('delivery_option_label');
-            const pickupOptionLabel = document.getElementById('pickup_option_label');
-            const locationIdSelect = document.getElementById('location_id');
-            const subtotalDisplay = document.getElementById('subtotal_display');
-            const subtotalAmountInput = document.getElementById('subtotal_amount_input');
-            const discountAmountInput = document.getElementById('discount_amount_input');
-            const discountDisplay = document.getElementById('discount_display');
-            const finalTotalDisplay = document.getElementById('final_total_display');
-            const totalAmountInput = document.getElementById('total_amount_input');
-            const promoCodeInput = document.getElementById('promo_code');
-            const applyPromoBtn = document.getElementById('apply_promo_btn');
-            const promoMessage = document.getElementById('promo_message');
-            const notificationArea = document.getElementById('notification-area');
-            
-            // Initialize page data
-            function initializePage() {
-                // Set initial subtotal
-                subtotalDisplay.textContent = `Rp ${cartTotal.toLocaleString('id-ID')}`;
-                subtotalAmountInput.value = cartTotal;
-                
-                // Initialize order type
-                updateOrderTypeVisibility();
-                updateFinalTotal();
-            }
-            
-            // Update order type visibility based on selection
-            function updateOrderTypeVisibility() {
-                if (orderTypeDelivery.checked) {
-                    deliveryDetails.classList.remove('hidden');
-                    deliveryAddressInput.setAttribute('required', 'required');
-                    updateDeliveryFee(10000); // Sample delivery fee
-                    renderPaymentOptions('delivery');
-                    getAndValidateLocation();
-                } else {
-                    deliveryDetails.classList.add('hidden');
-                    deliveryAddressInput.removeAttribute('required');
-                    deliveryAddressInput.value = '';
-                    updateDeliveryFee(0);
-                    renderPaymentOptions('pickup');
-                }
-                
-                updateFinalTotal();
-            }
-            
-            // Update delivery fee display
-            function updateDeliveryFee(fee) {
-                deliveryFeeInput.value = fee;
-                deliveryFeeDisplay.textContent = `Rp ${fee.toLocaleString('id-ID')}`;
-                deliveryFeeSummaryDisplay.textContent = `Rp ${fee.toLocaleString('id-ID')}`;
-            }
-            
-            // Render payment options based on order type
-            function renderPaymentOptions(type) {
-                let html = '';
-                
-                if (type === 'delivery') {
-                    html = `
-                        <label class="flex items-center p-4 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors border border-gray-200">
-                            <input type="radio" name="payment_method" value="cash_on_delivery" class="form-radio h-5 w-5 text-pizza-red" checked>
-                            <div class="ml-3 flex-1">
-                                <span class="text-lg font-medium text-gray-800">Tunai (Bayar ke Kurir)</span>
-                                <p class="text-sm text-gray-500">Bayar dengan uang tunai saat pesanan diterima</p>
-                            </div>
-                            <i class="fas fa-money-bill-wave text-pizza-red text-xl"></i>
-                        </label>
-                        <label class="flex items-center p-4 bg-gray-50 rounded-xl cursor-not-allowed border border-gray-200 opacity-60">
-                            <input type="radio" name="payment_method" value="non_cash_not_available" class="form-radio h-5 w-5 text-pizza-red" disabled>
-                            <div class="ml-3 flex-1">
-                                <span class="text-lg font-medium text-gray-400">Non Tunai (Belum Tersedia)</span>
-                                <p class="text-sm text-gray-400">Pembayaran non tunai belum tersedia untuk pengantaran</p>
-                            </div>
-                            <i class="fas fa-credit-card text-gray-400 text-xl"></i>
-                        </label>
-                    `;
-                } else {
-                    html = `
-                        <label class="flex items-center p-4 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors border border-gray-200">
-                            <input type="radio" name="payment_method" value="cash_on_pickup" class="form-radio h-5 w-5 text-pizza-red" checked>
-                            <div class="ml-3 flex-1">
-                                <span class="text-lg font-medium text-gray-800">Tunai (Bayar di Kasir)</span>
-                                <p class="text-sm text-gray-500">Bayar dengan uang tunai saat mengambil pesanan</p>
-                            </div>
-                            <i class="fas fa-money-bill-wave text-pizza-red text-xl"></i>
-                        </label>
-                        <label class="flex items-center p-4 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors border border-gray-200">
-                            <input type="radio" name="payment_method" value="card_on_pickup" class="form-radio h-5 w-5 text-pizza-red">
-                            <div class="ml-3 flex-1">
-                                <span class="text-lg font-medium text-gray-800">Non Tunai (Bayar di Kasir)</span>
-                                <p class="text-sm text-gray-500">Bayar dengan kartu debit/kredit di kasir</p>
-                            </div>
-                            <i class="fas fa-credit-card text-pizza-red text-xl"></i>
-                        </label>
-                        <label class="flex items-center p-4 bg-gray-50 rounded-xl cursor-not-allowed border border-gray-200 opacity-60">
-                            <input type="radio" name="payment_method" value="online_payment_not_available" class="form-radio h-5 w-5 text-pizza-red" disabled>
-                            <div class="ml-3 flex-1">
-                                <span class="text-lg font-medium text-gray-400">Non Tunai (Pembayaran Online)</span>
-                                <p class="text-sm text-gray-400">Pembayaran online belum tersedia</p>
-                            </div>
-                            <i class="fas fa-mobile-alt text-gray-400 text-xl"></i>
-                        </label>
-                    `;
-                }
-                
-                paymentOptions.innerHTML = html;
-            }
-            
-            // Update final total calculation
             function updateFinalTotal() {
-                const currentDiscount = parseFloat(discountAmountInput.value);
-                const currentDeliveryFee = parseFloat(deliveryFeeInput.value);
-                const subtotal = parseFloat(subtotalAmountInput.value);
-                const finalTotal = subtotal - currentDiscount + currentDeliveryFee;
-                
-                finalTotalDisplay.textContent = `Rp ${finalTotal.toLocaleString('id-ID')}`;
-                totalAmountInput.value = finalTotal;
+                const discount = parseFloat(elements.discountAmountInput.value) || 0;
+                const fee = parseFloat(elements.deliveryFeeInput.value) || 0;
+                const final = cartTotal - discount + fee;
+                elements.finalTotalDisplay.textContent = `Rp ${final.toLocaleString('id-ID')}`;
+                elements.totalAmountInput.value = final;
             }
-            
-            // Get and validate user location
+
+            function updateDeliveryFee(fee) {
+                elements.deliveryFeeInput.value = fee;
+                elements.deliveryFeeDisplay.textContent = `Rp ${fee.toLocaleString('id-ID')}`;
+                elements.deliveryFeeSummary.textContent = `Rp ${fee.toLocaleString('id-ID')}`;
+                updateFinalTotal();
+            }
+
             function getAndValidateLocation() {
-                const selectedLocation = locationIdSelect.options[locationIdSelect.selectedIndex];
-                const submitBtn = document.querySelector('button[type="submit"]');
-                const modal = document.getElementById('location-modal');
-                const modalMsg = document.getElementById('modal-message');
-                const modalTimer = document.getElementById('modal-countdown');
-                
-                if (!selectedLocation.value) {
-                    locationStatus.innerHTML = '<span class="text-orange-500">Pilih toko dulu di Section 2.</span>';
+                if (!elements.locationIdSelect.value) {
+                    elements.locationStatus.innerHTML = '<span class="text-orange-500">Pilih lokasi toko dulu!</span>';
                     return;
                 }
 
                 if (navigator.geolocation) {
-                    locationStatus.innerHTML = '<span class="spinner"></span> Memeriksa jangkauan...';
+                    elements.locationStatus.innerHTML = '<span class="spinner"></span> Menghitung jarak ke toko...';
                     
                     navigator.geolocation.getCurrentPosition((position) => {
-                        const userLat = position.coords.latitude;
-                        const userLon = position.coords.longitude;
-                        const storeLat = parseFloat(selectedLocation.getAttribute('data-lat'));
-                        const storeLng = parseFloat(selectedLocation.getAttribute('data-lng'));
-                        
-                        const distance = haversineDistance(userLat, userLon, storeLat, storeLng);
-                        const radius = 2; // Sesuai database kamu
+                        const coords = {
+                            location_id: elements.locationIdSelect.value,
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude
+                        };
 
-                        if (distance <= radius) {
-                            // SUKSES
-                            deliveryAddressInput.value = "Lokasi terdeteksi (Dalam Jangkauan)";
-                            latitudeInput.value = userLat;
-                            longitudeInput.value = userLon;
-                            submitBtn.disabled = false;
-                            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                            locationStatus.innerHTML = `<span class="text-green-600 font-bold">Kabar baik! Jarak ${distance.toFixed(2)} km.</span>`;
-                        } else {
-                            // GAGAL: MUNCULKAN MODAL
-                            submitBtn.disabled = true;
-                            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                            
-                            modalMsg.innerHTML = `Maaf, jarak Anda <b>${distance.toFixed(2)} km</b>. Radius pengantaran maksimal kami adalah ${radius} km.`;
-                            modal.classList.remove('hidden'); 
-
-                            let count = 5;
-                            window.locationTimer = setInterval(() => {
-                                count--;
-                                modalTimer.innerText = count;
+                        fetch('{{ url("/api/check-delivery") }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify(coords)
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (!data.allowed) {
+                                // JIKA DI LUAR RADIUS
+                                elements.modalMsg.innerHTML = data.message;
+                                elements.modal.classList.remove('hidden');
                                 
-                                if (count <= 0) {
-                                    // GANTI JUGA DI SINI:
-                                    clearInterval(window.locationTimer); 
-                                    
-                                    closeLocationModal(); 
-                                    
-                                    // Sisa kodenya tetap sama...
-                                    orderTypePickup.checked = true;
-                                    updateOrderTypeVisibility();
-                                    
-                                    submitBtn.disabled = false;
-                                    submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                                }
-                            }, 1000);
-                        }
+                                let count = 5;
+                                elements.modalTimer.innerText = count;
+                                const timer = setInterval(() => {
+                                    count--;
+                                    elements.modalTimer.innerText = count;
+                                    if (count <= 0) {
+                                        clearInterval(timer);
+                                        closeLocationModal();
+                                        elements.orderTypePickup.checked = true;
+                                        updateVisibility();
+                                    }
+                                }, 1000);
+                            } else {
+                                // JIKA MASUK RADIUS
+                                elements.deliveryAddressInput.value = "Lokasi Terverifikasi GPS";
+                                document.getElementById('latitude_input').value = coords.latitude;
+                                document.getElementById('longitude_input').value = coords.longitude;
+                                updateDeliveryFee(data.delivery_fee);
+                                elements.locationStatus.innerHTML = `<span class="text-green-600 font-bold">${data.message}</span>`;
+                            }
+                        })
+                        .catch(() => {
+                            elements.locationStatus.innerHTML = '<span class="text-red-500">API Error. Pastikan rute /api/check-delivery sudah ada.</span>';
+                        });
+                    }, () => {
+                        elements.locationStatus.innerHTML = '<span class="text-red-500">Gagal akses GPS. Gunakan metode Pickup.</span>';
                     });
                 }
             }
-            
-            // Handle location error
-            function handleLocationError(message) {
-                locationStatus.innerHTML = `<i class="fas fa-exclamation-triangle text-red-500 mr-2"></i> ${message}`;
-                locationStatus.className = 'mt-2 text-sm font-bold text-red-500 flex items-center';
-                
-                orderTypePickup.checked = true;
-                updateOrderTypeVisibility();
-                
-                orderTypeDelivery.disabled = true;
-                deliveryOptionLabel.classList.add('opacity-50', 'cursor-not-allowed');
-                orderTypeMessage.textContent = 'Pengantaran tidak tersedia. Silakan pilih Pickup.';
-                orderTypeMessage.className = 'text-sm text-red-500 font-semibold bg-red-50 p-3 rounded-lg';
-            }
-            
-            // Apply promo code
-            function applyPromoCode() {
-                const promoCode = promoCodeInput.value.trim();
-                
-                if (!promoCode) {
-                    showNotification('Masukkan kode promo terlebih dahulu.', 'error');
-                    return;
-                }
-                
-                promoMessage.classList.remove('hidden');
-                promoMessage.innerHTML = '<span class="spinner"></span> Memeriksa kode promo...';
-                promoMessage.className = 'text-sm text-gray-500 bg-gray-100 p-3 rounded-lg flex items-center';
-                
-                setTimeout(() => {
-                    const fakePromoCodes = ['DISKON10', 'PIZZA15'];
-                    if (fakePromoCodes.includes(promoCode)) {
-                        const discount = cartTotal * (promoCode === 'DISKON10' ? 0.1 : 0.15);
-                        discountAmountInput.value = discount;
-                        discountDisplay.textContent = `- Rp ${discount.toLocaleString('id-ID')}`;
-                        promoMessage.innerHTML = `<i class="fas fa-check-circle text-green-500 mr-2"></i> Kode promo berhasil diterapkan!`;
-                        promoMessage.className = 'text-sm text-green-600 bg-green-50 p-3 rounded-lg flex items-center';
-                        showNotification('Kode promo berhasil diterapkan!', 'success');
-                    } else {
-                        discountAmountInput.value = 0;
-                        discountDisplay.textContent = '- Rp 0';
-                        promoMessage.innerHTML = `<i class="fas fa-times-circle text-red-500 mr-2"></i> Kode promo tidak valid.`;
-                        promoMessage.className = 'text-sm text-red-600 bg-red-50 p-3 rounded-lg flex items-center';
-                        showNotification('Kode promo tidak valid.', 'error');
-                    }
-                    
-                    updateFinalTotal();
-                }, 1500);
-            }
-            
-            // Show notification
-            function showNotification(message, type) {
-                const notification = document.createElement('div');
-                notification.className = `p-3 rounded-lg mb-4 text-center flex items-center justify-center ${
-                    type === 'error' ? 'bg-red-500 text-white' : 
-                    type === 'success' ? 'bg-green-500 text-white' : 
-                    'bg-blue-500 text-white'
-                }`;
-                
-                notification.innerHTML = `
-                    <i class="fas fa-${type === 'error' ? 'exclamation-triangle' : type === 'success' ? 'check-circle' : 'info-circle'} mr-2"></i>
-                    ${message}
-                `;
-                
-                notificationArea.appendChild(notification);
-                
-                setTimeout(() => {
-                    notification.remove();
-                }, 5000);
-            }
-            
-            // Event Listeners
-            orderTypeDelivery.addEventListener('change', updateOrderTypeVisibility);
-            orderTypePickup.addEventListener('change', updateOrderTypeVisibility);
-            
-            locationIdSelect.addEventListener('change', () => {
-                orderTypeDelivery.disabled = false;
-                deliveryOptionLabel.classList.remove('opacity-50', 'cursor-not-allowed');
-                orderTypeMessage.textContent = "Pilih opsi 'Delivery' untuk pengantaran ke lokasi Anda, atau 'Pickup' untuk mengambil pesanan di toko.";
-                orderTypeMessage.className = 'text-sm text-gray-500 bg-pizza-light p-3 rounded-lg';
-                updateOrderTypeVisibility();
-            });
-            
-            applyPromoBtn.addEventListener('click', applyPromoCode);
-            
-            promoCodeInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    applyPromoCode();
-                }
-            });
-            
-            document.getElementById('checkoutForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                // Ubah tombol jadi loading biar user gak klik 2 kali
-                const btn = this.querySelector('button[type="submit"]');
-                btn.innerHTML = '<span class="spinner"></span> Memproses...';
-                btn.classList.add('opacity-75', 'cursor-not-allowed');
 
-                setTimeout(() => {
-                    // Redirect to success page or process payment
-                    showNotification('Pesanan berhasil diproses! Terima kasih.', 'success');
-                    this.submit();
-                }, 2000);
-            });
-            
-            // Initialize the page
-            initializePage();
+            function updateVisibility() {
+                if (elements.orderTypeDelivery.checked) {
+                    elements.deliveryDetails.classList.remove('hidden');
+                    getAndValidateLocation();
+                } else {
+                    elements.deliveryDetails.classList.add('hidden');
+                    updateDeliveryFee(0);
+                }
+            }
+
+            elements.orderTypeDelivery.addEventListener('change', updateVisibility);
+            elements.orderTypePickup.addEventListener('change', updateVisibility);
+            elements.locationIdSelect.addEventListener('change', updateVisibility);
+
+            // Jalankan awal
+            updateVisibility();
         });
 
-        // Fungsi pembantu untuk tutup modal manual
         function closeLocationModal() {
-            const modal = document.getElementById('location-modal');
-            if (modal) {modal.classList.add('hidden');
-                const pickupRadio = document.getElementById('order_type_pickup');
-                if (pickupRadio) {
-                    pickupRadio.checked = true;
-                    if (typeof updateOrderTypeVisibility === 'function') {
-                        updateOrderTypeVisibility();
-                    }
-                }
-            }
-
-            if (window.locationTimer) {
-                clearInterval(window.locationTimer);
-            }
+            document.getElementById('location-modal').classList.add('hidden');
         }
     </script>
 </body>

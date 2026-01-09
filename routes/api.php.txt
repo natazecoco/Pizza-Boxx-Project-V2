@@ -1,0 +1,56 @@
+<?php
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\CheckoutController; // Pastikan ini ada
+use App\Models\Location;
+
+
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register API routes for your application. These
+| routes are loaded by the RouteServiceProvider and all of them will
+| be assigned to the "api" middleware group. Make something great!
+|
+*/
+
+Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+    return $request->user();
+});
+
+// Rute API untuk Validasi Promo
+Route::post('/validate-promo', [CheckoutController::class, 'validatePromo']);
+
+// Rute API untuk Cek Pengantaran
+Route::post('/check-delivery', function (Request $request) {
+    $location = Location::findOrFail($request->location_id);
+
+    $earthRadius = 6371;
+
+    $dLat = deg2rad($location->latitude - $request->latitude);
+    $dLon = deg2rad($location->longitude - $request->longitude);
+
+    $a = sin($dLat / 2) ** 2 +
+         cos(deg2rad($request->latitude)) *
+         cos(deg2rad($location->latitude)) *
+         sin($dLon / 2) ** 2;
+
+    $distance = $earthRadius * (2 * atan2(sqrt($a), sqrt(1 - $a)));
+
+    if ($distance > $location->delivery_radius_km) {
+        return response()->json([
+            'allowed' => false,
+            'message' => "Jarak Anda " . round($distance, 2) . " km, melebihi radius " . $location->delivery_radius_km . " km."
+        ]);
+    }
+
+    return response()->json([
+        'allowed' => true,
+        'delivery_fee' => $location->delivery_fee,
+        'message' => "Dalam jangkauan (" . round($distance, 2) . " km)."
+    ]);
+});
+

@@ -62,6 +62,14 @@ class LocationResource extends Resource
                     ->default(5)
                     ->minValue(1)
                     ->label('Radius Pengantaran (KM)'),
+                TextInput::make('delivery_fee') // Tambahkan field ongkir
+                    ->numeric()
+                    ->prefix('Rp ')
+                    ->label('Biaya Pengantaran')
+                    ->default(0),
+                TextColumn::make('delivery_fee')
+                    ->money('IDR')
+                    ->label('Ongkir'),
                 // --- AKHIR TAMBAHAN FIELD ---
             ]);
     }

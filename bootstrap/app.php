@@ -10,9 +10,10 @@ use Spatie\Permission\Middleware\PermissionMiddleware;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
-        web: __DIR__.'/../routes/web.php',
-        commands: __DIR__.'/../routes/console.php',
-        health: '/up',
+        web: __DIR__.'/../routes/web.php', // Pastikan rute web dimuat
+        api: __DIR__.'/../routes/api.php', // Pastikan rute API dimuat
+        commands: __DIR__.'/../routes/console.php', // Pastikan rute konsol dimuat
+        health: '/up', // Endpoint kesehatan aplikasi
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
