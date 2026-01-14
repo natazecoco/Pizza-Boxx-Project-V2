@@ -259,38 +259,45 @@ class CheckoutController extends Controller
         $promoCode = $request->input('promo_code');
         $subtotal = $request->input('subtotal');
 
-        $promo = Promo::where('code', $promoCode)
-            ->where('is_active', true)
-            ->where(function($query) {
-                $query->whereNull('start_date')
-                    ->orWhere('start_date', '<=', now());
-            })
-            ->where(function($query) {
-                $query->whereNull('end_date')
-                    ->orWhere('end_date', '>=', now());
-            })
-            ->first();
+        // 1. Cari kodenya dulu (tanpa cek tanggal/aktif dulu)
+        $promo = Promo::where('code', $promoCode)->first();
 
+        // 2. Cek apakah kodenya memang tidak ada di database
         if (!$promo) {
             return response()->json([
                 'success' => false,
-                'message' => 'Kode promo tidak ditemukan atau tidak aktif.'
+                'message' => 'Kode promo tidak valid. Periksa kembali penulisan kodenya.'
             ]);
         }
 
+        // 3. Cek apakah statusnya non-aktif
+        if (!$promo->is_active) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Maaf, promo ini sudah tidak aktif.'
+            ]);
+        }
+
+        // 4. Cek apakah sudah kedaluwarsa (berdasarkan end_date)
+        if ($promo->end_date && \Carbon\Carbon::now()->greaterThan($promo->end_date)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Yah, kode promo ini sudah kedaluwarsa pada ' . \Carbon\Carbon::parse($promo->end_date)->format('d M Y')
+            ]);
+        }
+
+        // 5. Cek minimal belanja
         if ($subtotal < ($promo->min_order_amount ?? 0)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Promo ini berlaku untuk minimal belanja Rp ' . number_format($promo->min_order_amount, 0, ',', '.') . '.'
+                'message' => 'Minimal belanja untuk promo ini adalah Rp ' . number_format($promo->min_order_amount, 0, ',', '.')
             ]);
         }
 
-        $discountAmount = 0;
-        if ($promo->type === 'percentage') {
-            $discountAmount = $subtotal * ($promo->value / 100);
-        } elseif ($promo->type === 'fixed_amount') {
-            $discountAmount = $promo->value;
-        }
+        // 6. Jika semua lolos, hitung diskon
+        $discountAmount = ($promo->type === 'percentage') 
+            ? $subtotal * ($promo->value / 100) 
+            : $promo->value;
 
         return response()->json([
             'success' => true,

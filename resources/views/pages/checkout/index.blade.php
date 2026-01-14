@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lanjutkan ke Checkout - Pizza Delivery</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
         tailwind.config = {
@@ -85,10 +86,10 @@
             <!-- // Header Section -->
             <div class="flex flex-col items-center">
                 <div class="w-20 h-20 rounded-full bg-pizza-red flex items-center justify-center mb-4">
-                    <i class="fas fa-shopping-cart text-white text-3xl"></i>
+                    <i class="fas fa-shopping-cart text-white text-2xl"></i>
                 </div>
-                <h1 class="text-3xl font-bold text-pizza-red mb-2 text-center">Lanjutkan ke Checkout</h1>
-                <p class="text-gray-600 text-center">Selesaikan pesanan Anda dengan mengisi informasi berikut</p>
+                <h1 class="text-3xl font-bold text-pizza-red mb-2 text-center">Checkout</h1>
+                <!-- <p class="text-gray-600 text-center">Selesaikan pesanan Anda dengan mengisi informasi berikut</p> -->
             </div>
         </div>
 
@@ -357,7 +358,7 @@
                 <!-- Pickup Store Details -->
                 <div id="pickup_store_details" class="hidden mt-4">
                     <div class="bg-gray-50 border border-gray-200 rounded-xl p-4">
-                        <h4 class="text-lg font-bold text-gray-800 mb-2">
+                        <h4 class="text-lg font-semibold text-gray-800 mb-2">
                             <i class="fas fa-store text-pizza-red mr-2"></i>
                             Detail Toko
                         </h4>
@@ -406,6 +407,7 @@
                 <input type="hidden" name="discount_amount" id="discount_amount_input" value="0">
             </div>
 
+            <!-- Payment Method Section -->
             <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
                 <div class="flex items-center mb-4">
                     <div class="w-8 h-8 rounded-full bg-pizza-red flex items-center justify-center mr-3">
@@ -413,8 +415,34 @@
                     </div>
                     <h2 class="text-xl font-bold text-pizza-red">Metode Pembayaran</h2>
                 </div>
-                
+
                 <div id="payment_options" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <label id="pay_cod" class="flex items-center p-4 border-2 border-pizza-red bg-red-50 rounded-xl cursor-pointer shadow-sm transition-all md:col-span-2">
+                        <input type="radio" name="payment_method" value="cash_on_delivery" checked class="form-radio h-5 w-5 text-pizza-red">
+                        <div class="ml-3">
+                            <span class="text-md font-semibold text-gray-800">Tunai ke Kurir (COD)</span>
+                            <p class="text-sm text-gray-500">Bayar langsung saat pizza sampai</p>
+                        </div>
+                        <i class="fas fa-hand-holding-dollar ml-auto text-pizza-red text-xl"></i>
+                    </label>
+
+                    <label id="pay_cash_pickup" class="hidden flex items-center p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-pizza-red transition-all group">
+                        <input type="radio" name="payment_method" value="cash_on_pickup" class="form-radio h-5 w-5 text-pizza-red">
+                        <div class="ml-3">
+                            <span class="text-md font-semibold text-gray-800">Tunai di Kasir</span>
+                            <p class="text-xs text-gray-500">Bayar tunai di toko</p>
+                        </div>
+                        <i class="fas fa-cash-register ml-auto text-gray-400 group-hover:text-pizza-red text-xl"></i>
+                    </label>
+
+                    <label id="pay_card_pickup" class="hidden flex items-center p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-pizza-red transition-all group">
+                        <input type="radio" name="payment_method" value="card_on_pickup" class="form-radio h-5 w-5 text-pizza-red">
+                        <div class="ml-3">
+                            <span class="text-md font-semibold text-gray-800">Kartu Debit/Kredit</span>
+                            <p class="text-xs text-gray-500">Gesek di mesin EDC toko</p>
+                        </div>
+                        <i class="fas fa-credit-card ml-auto text-gray-400 group-hover:text-pizza-red text-xl"></i>
+                    </label>
                 </div>
             </div>
 
@@ -531,15 +559,80 @@
 
             /* ================== PAYMENT ================== */
             function renderPayment(type) {
-                el.paymentOptions.innerHTML = type === 'delivery'
-                    ? `
-                    <label><input type="radio" name="payment_method" value="cash_on_delivery" checked> Tunai ke Kurir</label>
-                    `
-                    : `
-                    <label><input type="radio" name="payment_method" value="cash_on_pickup" checked> Tunai di Kasir</label>
-                    <label><input type="radio" name="payment_method" value="card_on_pickup"> Kartu</label>
-                    `;
+                // Ambil elemennya
+                const payCod = document.getElementById('pay_cod');
+                const payCashPickup = document.getElementById('pay_cash_pickup');
+                const payCardPickup = document.getElementById('pay_card_pickup');
+
+                if (type === 'delivery') {
+                    // Tampilkan COD, Sembunyikan Pickup
+                    payCod.classList.remove('hidden');
+                    payCashPickup.classList.add('hidden');
+                    payCardPickup.classList.add('hidden');
+                    
+                    // Otomatis pilih COD
+                    payCod.querySelector('input').checked = true;
+                } else {
+                    // Sembunyikan COD, Tampilkan Pickup
+                    payCod.classList.add('hidden');
+                    payCashPickup.classList.remove('hidden');
+                    payCardPickup.classList.remove('hidden');
+                    
+                    // Otomatis pilih Tunai di Kasir sebagai default
+                    payCashPickup.querySelector('input').checked = true;
+                }
             }
+
+            /* Enhanced Render Payment Options */
+            // function renderPayment(type) {
+            //     if (type === 'delivery') {
+            //         el.paymentOptions.innerHTML = `
+            //             <label class="relative flex items-center p-4 border-2 border-pizza-red rounded-xl cursor-pointer bg-red-50 shadow-sm transition-all md:col-span-2">
+            //                 <input type="radio" name="payment_method" value="cash_on_delivery" checked class="hidden">
+            //                 <div class="flex items-center w-full">
+            //                     <div class="w-12 h-12 rounded-full bg-pizza-red flex items-center justify-center mr-4">
+            //                         <i class="fas fa-hand-holding-dollar text-white text-xl"></i>
+            //                     </div>
+            //                     <div>
+            //                         <span class="text-md font-bold text-gray-800">Tunai ke Kurir (COD)</span>
+            //                         <p class="text-sm text-gray-500">Bayar langsung saat pizza sampai di rumah Anda</p>
+            //                     </div>
+            //                     <div class="ml-auto">
+            //                         <i class="fas fa-check-circle text-pizza-red text-2xl"></i>
+            //                     </div>
+            //                 </div>
+            //             </label>
+            //         `;
+            //     } else {
+            //         el.paymentOptions.innerHTML = `
+            //             <label class="group relative flex items-center p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-pizza-red transition-all">
+            //                 <input type="radio" name="payment_method" value="cash_on_pickup" checked class="peer hidden">
+            //                 <div class="flex items-center w-full">
+            //                     <div class="w-10 h-10 rounded-full bg-gray-100 group-hover:bg-pizza-light flex items-center justify-center mr-3 transition-colors">
+            //                         <i class="fas fa-cash-register text-gray-500 group-hover:text-pizza-red"></i>
+            //                     </div>
+            //                     <div>
+            //                         <span class="text-md font-bold text-gray-800">Tunai di Kasir</span>
+            //                         <p class="text-xs text-gray-500">Bayar saat ambil pesanan</p>
+            //                     </div>
+            //                 </div>
+            //             </label>
+
+            //             <label class="group relative flex items-center p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-pizza-red transition-all">
+            //                 <input type="radio" name="payment_method" value="card_on_pickup" class="peer hidden">
+            //                 <div class="flex items-center w-full">
+            //                     <div class="w-10 h-10 rounded-full bg-gray-100 group-hover:bg-pizza-light flex items-center justify-center mr-3 transition-colors">
+            //                         <i class="fas fa-credit-card text-gray-500 group-hover:text-pizza-red"></i>
+            //                     </div>
+            //                     <div>
+            //                         <span class="text-md font-bold text-gray-800">Debit / Kredit</span>
+            //                         <p class="text-xs text-gray-500">Gesek kartu di mesin EDC toko</p>
+            //                     </div>
+            //                 </div>
+            //             </label>
+            //         `;
+            //     }
+            // }
 
             /* ================== LOCATION (SERVER VALIDATION) ================== */
             function validateLocation() {
@@ -657,6 +750,30 @@
 
             /* ================== PROMO ================== */
             el.applyPromoBtn.addEventListener('click', () => {
+                // 1. Ambil value terbaru
+                const code = el.promoCode.value;
+                const subtotal = el.subtotalInput.value;
+
+                // Cek kolom kosong
+                if (!code) {
+                    el.promoMessage.classList.remove('hidden');
+                    el.promoMessage.textContent = "Ups! Silakan masukkan kode promo terlebih dahulu.";
+                    // Beri warna kuning/orange untuk peringatan
+                    el.promoMessage.className = "text-sm p-3 rounded-lg bg-orange-100 text-orange-700 mt-2 border border-orange-200";
+                    return; // Berhenti di sini
+                }
+
+                // Cek kolom kosong (SweetAlert2)
+                // if (!code) {
+                //     Swal.fire({
+                //         icon: 'warning',
+                //         title: 'Kolom Kosong',
+                //         text: 'Harap masukkan kode promo sebelum menekan tombol terapkan!',
+                //         confirmButtonColor: '#e53e3e', // Warna pizza-red kamu
+                //     });
+                //     return;
+                // }
+
                 fetch('/api/validate-promo', {
                     method: 'POST',
                     headers: {
@@ -664,22 +781,32 @@
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
                     body: JSON.stringify({
-                        promo_code: el.promoCode.value,
-                        subtotal: el.subtotalInput.value
+                        promo_code: code,
+                        subtotal: subtotal
                     })
                 })
                 .then(r => r.json())
                 .then(d => {
+                    // 2. Munculkan elemen pesan (Hapus class hidden)
+                    el.promoMessage.classList.remove('hidden');
+                    el.promoMessage.textContent = d.message;
+
                     if (!d.success) {
                         el.discountInput.value = 0;
                         el.discountDisplay.textContent = '- Rp 0';
-                        el.promoMessage.textContent = d.message;
-                        return updateFinalTotal();
+                        // Beri warna merah untuk error
+                        el.promoMessage.className = "text-sm p-3 rounded-lg bg-red-100 text-red-700 mt-2";
+                    } else {
+                        el.discountInput.value = d.discount_amount;
+                        el.discountDisplay.textContent = `- Rp ${Number(d.discount_amount).toLocaleString('id-ID')}`;
+                        // Beri warna hijau untuk sukses
+                        el.promoMessage.className = "text-sm p-3 rounded-lg bg-green-100 text-green-700 mt-2";
                     }
-                    el.discountInput.value = d.discount_amount;
-                    el.discountDisplay.textContent = `- Rp ${d.discount_amount.toLocaleString('id-ID')}`;
-                    el.promoMessage.textContent = 'Promo diterapkan';
                     updateFinalTotal();
+                })
+                .catch(err => {
+                    console.error("Gagal verifikasi promo:", err);
+                    alert("Terjadi gangguan koneksi ke server.");
                 });
             });
 
