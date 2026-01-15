@@ -7,7 +7,7 @@
                      alt="Pizza Boxx Logo"
                      class="h-10 w-10 object-contain drop-shadow-md transition-transform duration-300 group-hover:rotate-[15deg]"
                      loading="eager">
-                <span class="hidden sm:block text-xl font-bold text-red-600 group-hover:text-red-700 transition-colors">Pizza Boxx</span>
+                <span class="hidden sm:block text-xl font-bold text-red-600 group-hover:text-red-700 transition-colors uppercase">Pizza Boxx</span>
             </a>
         </div>
 

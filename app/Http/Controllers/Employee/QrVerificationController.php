@@ -9,30 +9,39 @@ use Illuminate\Support\Facades\Log;
 
 class QrVerificationController extends Controller
 {
+    // Menampilkan form verifikasi QR/PIN
     public function showForm(Request $request)
     {
-        return view('pages.pegawai.verify');
+        $order = Order::findOrFail($request->query('order_id'));
+        return view('pages.pegawai.verify', compact('order'));
     }
 
+    // Memproses verifikasi QR/PIN
     public function verify(Request $request)
     {
-        $validatedData = $request->validate([
-            'pin' => 'required|string|size:6',
+        $request->validate([
+            'order_id' => 'required|exists:orders,id',
+            'pin' => 'required|string|size:6', // Asumsi PIN 6 digit
         ]);
-        
-        $pin = $validatedData['pin'];
 
-        $order = Order::where('pickup_pin', $pin)
-                      ->whereIn('status', ['ready_for_delivery'])
-                      ->first();
-        
-        if (!$order) {
-            return back()->with('error', 'PIN tidak valid atau pesanan belum siap diambil.');
+        $order = Order::find($request->order_id);
+
+        // Cek apakah PIN cocok (Asumsi kolom di database namanya pickup_pin)
+        if ($order->pickup_pin === $request->pin) {
+            $order->update(['status' => 'completed']);
+            // return redirect()->route('pegawai.dashboard')->with('success', 'Verifikasi berhasil! Pesanan selesai.');
+
+            return response()->json([
+            'success' => true,
+            'message' => 'Verifikasi berhasil! Pesanan selesai.'
+        ]);
         }
 
-        $order->status = 'completed';
-        $order->save();
+        return response()->json([
+            'success' => false,
+            'message' => 'PIN yang Anda masukkan salah. Silahkan coba lagi'
+        ], 422);
 
-        return back()->with('success', 'Verifikasi berhasil! Status pesanan #'.$order->id.' diubah menjadi "completed".');
+        // return back()->with('error', 'PIN yang dimasukkan salah. Silakan coba lagi.');
     }
 }

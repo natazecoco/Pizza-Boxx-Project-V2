@@ -1,79 +1,90 @@
 @extends('layouts.employee')
 
 @section('content')
-<div class="container mx-auto py-10 px-2 md:px-0">
-    <div class="mb-6">
-        <a href="{{ route('pegawai.deliveries.index') }}" class="inline-flex items-center text-red-600 hover:text-red-800 font-semibold transition-colors duration-200">
-            <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
-            Kembali ke Daftar Pengantaran
+<div class="container mx-auto px-4 py-6 max-w-lg"> {{-- max-w-lg agar pas di layar HP --}}
+    
+    <div class="flex items-center gap-4 mb-6">
+        <a href="{{ route('pegawai.deliveries.index') }}" class="bg-white p-3 rounded-2xl shadow-sm text-gray-600 hover:text-red-600 transition-colors">
+            <i class="fas fa-arrow-left"></i>
         </a>
+        <h2 class="text-xl font-bold text-gray-800">Navigasi Pengantaran</h2>
     </div>
 
-    <div class="bg-white rounded-2xl shadow-xl p-8 animate-fade-in-up">
-        <h2 class="text-2xl font-bold mb-4 text-red-700">Detail Pengantaran #{{ $delivery->id }}</h2>
-        
-        <div class="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="space-y-2">
-                <p class="text-gray-700"><span class="font-semibold">ID Pesanan:</span> #{{ $delivery->order_id }}</p>
-                <p class="text-gray-700"><span class="font-semibold">Nama Pelanggan:</span> {{ $delivery->order->customer_name ?? '-' }}</p>
-                <p class="text-gray-700"><span class="font-semibold">Telepon:</span> {{ $delivery->order->customer_phone ?? '-' }}</p>
-                <p class="text-gray-700"><span class="font-semibold">Alamat Pengantaran:</span> {{ $delivery->order->delivery_address ?? '-' }}</p>
-                <p class="text-gray-700"><span class="font-semibold">Catatan:</span> {{ $delivery->order->delivery_notes ?? '-' }}</p>
-            </div>
-            <div class="space-y-2">
-                <p class="text-gray-700"><span class="font-semibold">Status Pesanan:</span>
-                    <span class="px-2 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700">{{ ucfirst($delivery->order->status ?? '-') }}</span>
-                </p>
-                <p class="text-gray-700"><span class="font-semibold">Total Pembayaran:</span>
-                    <span class="text-lg font-bold text-red-600">Rp{{ number_format($delivery->order->total_amount ?? 0, 0, ',', '.') }}</span>
-                </p>
-                <p class="text-gray-700"><span class="font-semibold">Waktu Dibuat:</span> {{ $delivery->order->created_at->format('d M Y H:i') ?? '-' }}</p>
-            </div>
+    <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100 mb-6">
+        <div class="bg-red-600 p-6 text-white">
+            <p class="text-xs opacity-80 uppercase font-bold tracking-widest">Antar Pesanan #{{ $order->id }}</p>
+            <h1 class="text-2xl font-black mt-1 uppercase">{{ $order->customer_name }}</h1>
         </div>
-
-        <h3 class="text-lg font-bold mb-4 text-red-700">Formulir Update Pengantaran</h3>
         
-        <form action="{{ route('pegawai.deliveries.update', $delivery->id) }}" method="POST" class="space-y-6">
-            @csrf
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block font-semibold mb-1">Kurir</label>
-                    <select name="delivery_employee_id" class="w-full rounded border-gray-300 focus:ring-red-400 focus:border-red-400">
-                        @foreach($employees as $employee)
-                            <option value="{{ $employee->id }}" @if($delivery->delivery_employee_id == $employee->id) selected @endif>{{ $employee->name }}</option>
-                        @endforeach
-                    </select>
+        <div class="p-6">
+            <div class="flex gap-4 mb-8">
+                <div class="bg-red-50 p-4 rounded-2xl text-red-600 h-fit">
+                    <i class="fas fa-map-marked-alt text-xl"></i>
                 </div>
                 <div>
-                    <label class="block font-semibold mb-1">Status</label>
-                    <select name="status" class="w-full rounded border-gray-300 focus:ring-red-400 focus:border-red-400">
-                        <option value="pending" @if($delivery->status=='pending') selected @endif>Pending</option>
-                        <option value="on_delivery" @if($delivery->status=='on_delivery') selected @endif>On Delivery</option>
-                        <option value="delivered" @if($delivery->status=='delivered') selected @endif>Delivered</option>
-                        <option value="failed" @if($delivery->status=='failed') selected @endif>Failed</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block font-semibold mb-1">Ditugaskan</label>
-                    <input type="datetime-local" name="assigned_at" value="{{ $delivery->assigned_at ? $delivery->assigned_at->format('Y-m-d\TH:i') : '' }}" class="w-full rounded border-gray-300 focus:ring-red-400 focus:border-red-400" />
-                </div>
-                <div>
-                    <label class="block font-semibold mb-1">Diambil</label>
-                    <input type="datetime-local" name="picked_up_at" value="{{ $delivery->picked_up_at ? $delivery->picked_up_at->format('Y-m-d\TH:i') : '' }}" class="w-full rounded border-gray-300 focus:ring-red-400 focus:border-red-400" />
-                </div>
-                <div>
-                    <label class="block font-semibold mb-1">Sampai</label>
-                    <input type="datetime-local" name="delivered_at" value="{{ $delivery->delivered_at ? $delivery->delivered_at->format('Y-m-d\TH:i') : '' }}" class="w-full rounded border-gray-300 focus:ring-red-400 focus:border-red-400" />
-                </div>
-                <div class="md:col-span-2">
-                    <label class="block font-semibold mb-1">Catatan</label>
-                    <textarea name="notes" class="w-full rounded border-gray-300 focus:ring-red-400 focus:border-red-400">{{ $delivery->notes }}</textarea>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Alamat Pengiriman:</p>
+                    <p class="text-gray-700 font-bold leading-relaxed mt-1">
+                        {{ $order->delivery_address ?? 'Alamat belum diisi' }}
+                    </p>
                 </div>
             </div>
-            <div class="flex justify-end mt-6">
-                <button type="submit" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow transition-all duration-200">Simpan Perubahan</button>
-            </div>
-        </form>
+
+            <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($order->delivery_address) }}" 
+               target="_blank"
+               class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-center flex items-center justify-center gap-3 shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all mb-4">
+                <i class="fas fa-location-arrow"></i> BUKA GOOGLE MAPS
+            </a>
+
+            @php
+                $phone = $order->customer_phone;
+                if(str_starts_with($phone, '0')) {
+                    $phone = '62' . substr($phone, 1);
+                }
+            @endphp
+            <a href="https://wa.me/{{ $phone }}?text=Halo%20Kak%20{{ urlencode($order->customer_name) }},%20kurir%20Pizza%20Boxx%20sedang%20menuju%20lokasi%20ya!" 
+               target="_blank"
+               class="w-full bg-green-500 text-white py-4 rounded-2xl font-black text-center flex items-center justify-center gap-3 shadow-lg shadow-green-100 hover:bg-green-600 transition-all">
+                <i class="fab fa-whatsapp text-xl"></i> HUBUNGI PELANGGAN
+            </a>
+        </div>
+    </div>
+
+    <div class="bg-gray-50 rounded-3xl p-6 border border-gray-200 mb-24">
+        <h3 class="text-xs font-bold text-gray-400 uppercase mb-4 tracking-widest">Cek Barang Bawaan:</h3>
+        <ul class="space-y-3">
+            @foreach($order->orderItems as $item)
+            <li class="flex justify-between items-center bg-white p-3 rounded-xl border border-gray-100">
+                <span class="text-sm font-bold text-gray-700">
+                    <span class="text-red-600">{{ $item->quantity }}x</span> {{ $item->product_name }}
+                </span>
+                <i class="far fa-circle text-gray-300"></i>
+            </li>
+            @endforeach
+        </ul>
+        <div class="mt-4 pt-4 border-t border-gray-200 flex justify-between items-center">
+            <span class="text-xs font-bold text-gray-400">TOTAL TAGIHAN:</span>
+            <span class="text-lg font-black text-gray-800">Rp{{ number_format($order->total_amount) }}</span>
+        </div>
+    </div>
+
+    <div class="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-sm border-t border-gray-100 md:left-64 shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
+        @if($order->status == 'on_delivery')
+            <form action="{{ route('pegawai.orders.update-status', $order->id) }}" method="POST">
+                @csrf
+                <input type="hidden" name="status" value="delivered">
+                <button type="submit" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-xl hover:bg-indigo-700 transition-all">
+                    SAYESAIKAN PENGANTARAN
+                </button>
+            </form>
+        @else
+            <form action="{{ route('pegawai.orders.update-status', $order->id) }}" method="POST">
+                @csrf
+                <input type="hidden" name="status" value="on_delivery">
+                <button type="submit" class="w-full bg-purple-600 text-white py-4 rounded-2xl font-black shadow-xl hover:bg-purple-700 transition-all">
+                    KONFIRMASI: SAYA BERANGKAT
+                </button>
+            </form>
+        @endif
     </div>
 </div>
 @endsection

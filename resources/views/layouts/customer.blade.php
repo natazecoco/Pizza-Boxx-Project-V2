@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Pizza Boxx - Authentic Italian Pizza</title>
+    <title>Pizza Boxx Order</title>
     <meta name="description" content="Order delicious authentic Italian pizza with fresh ingredients. Fast delivery and great taste guaranteed.">
 
     <link rel="icon" href="{{ asset('images/pizza-boxx-logo.png') }}" type="image/x-icon">

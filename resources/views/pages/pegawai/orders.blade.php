@@ -1,120 +1,114 @@
 @extends('layouts.employee')
-
 @section('content')
-<div class="container mx-auto py-10 px-2 md:px-0">
-    <h2 class="text-3xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18" /></svg>
-            Manajemen Pesanan
-        </h2>
+<div class="container mx-auto py-10 px-2 md:px-0" x-data="{ filter: 'all' }"> {{-- Tambahkan x-data di sini --}}
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+<!-- Header Halaman -->
+    <div class="mb-8">
+        <h2 class="text-3xl font-black text-gray-800 tracking-tight">Daftar Pesanan 🍕</h2>
+        <p class="text-gray-500 mt-1">Pantau dan kelola proses pembuatan pizza pelanggan secara real-time.</p>
+    </div>
+
+    <!-- Tombol Filter -->
+    <div class="mb-8 flex flex-wrap items-center gap-3">
+        <button @click="filter = 'all'" 
+                :class="filter === 'all' ? 'bg-red-600 text-white shadow-lg scale-105' : 'bg-white text-gray-600 hover:bg-gray-50 border-gray-200'"
+                class="px-6 py-2 rounded-full border text-sm font-bold transition-all duration-200 flex items-center gap-2">
+            Semua <span class="bg-white/20 px-2 py-0.5 rounded-full text-[10px]">{{ $orders->count() }}</span>
+        </button>
+        
+        <button @click="filter = 'delivery'" 
+                :class="filter === 'delivery' ? 'bg-blue-600 text-white shadow-lg scale-105' : 'bg-white text-gray-600 hover:bg-gray-50 border-gray-200'"
+                class="px-6 py-2 rounded-full border text-sm font-bold transition-all duration-200 flex items-center gap-2">
+            <i class="fas fa-truck"></i> Delivery <span class="bg-white/20 px-2 py-0.5 rounded-full text-[10px]">{{ $orders->where('order_type', 'delivery')->count() }}</span>
+        </button>
+        
+        <button @click="filter = 'pickup'" 
+                :class="filter === 'pickup' ? 'bg-green-600 text-white shadow-lg scale-105' : 'bg-white text-gray-600 hover:bg-gray-50 border-gray-200'"
+                class="px-6 py-2 rounded-full border text-sm font-bold transition-all duration-200 flex items-center gap-2">
+            <i class="fas fa-store"></i> Pickup <span class="bg-white/20 px-2 py-0.5 rounded-full text-[10px]">{{ $orders->where('order_type', 'pickup')->count() }}</span>
+        </button>
+    </div>
+
+    <!-- Statistik Ringkas -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div class="bg-red-50 p-6 rounded-lg shadow-md flex items-center justify-between">
             <div>
-                <h2 class="text-xl font-semibold text-red-700">Pesanan Pending</h2>
+                <h2 class="text-xl font-semibold text-red-700">Pending</h2>
                 <p class="text-4xl font-bold text-red-600 mt-2">{{ $orders->where('status', 'pending')->count() }}</p>
             </div>
-            <div class="p-3 bg-red-200 rounded-full">
-                <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            </div>
+            <div class="p-3 bg-red-200 rounded-full"><i class="fas fa-clock text-red-600 text-2xl"></i></div>
         </div>
         <div class="bg-yellow-50 p-6 rounded-lg shadow-md flex items-center justify-between">
             <div>
-                <h2 class="text-xl font-semibold text-yellow-700">Pesanan Proses</h2>
-                <p class="text-4xl font-bold text-yellow-600 mt-2">{{ $orders->whereIn('status', ['accepted', 'ready_for_pickup', 'on_delivery'])->count() }}</p>
+                <h2 class="text-xl font-semibold text-yellow-700">Proses</h2>
+                <p class="text-4xl font-bold text-yellow-600 mt-2">{{ $orders->whereIn('status', ['accepted', 'preparing', 'ready_for_delivery', 'on_delivery'])->count() }}</p>
             </div>
-            <div class="p-3 bg-yellow-200 rounded-full">
-                <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            </div>
+            <div class="p-3 bg-yellow-200 rounded-full"><i class="fas fa-spinner fa-spin text-yellow-600 text-2xl"></i></div>
         </div>
         <div class="bg-green-50 p-6 rounded-lg shadow-md flex items-center justify-between">
             <div>
-                <h2 class="text-xl font-semibold text-green-700">Pesanan Selesai</h2>
+                <h2 class="text-xl font-semibold text-green-700">Selesai</h2>
                 <p class="text-4xl font-bold text-green-600 mt-2">{{ $orders->whereIn('status', ['completed', 'delivered'])->count() }}</p>
             </div>
-            <div class="p-3 bg-green-200 rounded-full">
-                <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-            </div>
+            <div class="p-3 bg-green-200 rounded-full"><i class="fas fa-check-double text-green-600 text-2xl"></i></div>
         </div>
     </div>
     
-    <div class="mt-8 animate-fade-in-up">
+    <!-- Daftar Pesanan -->
+    <div class="mt-8">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div class="bg-white p-4 rounded-lg shadow-md">
-                <h3 class="text-lg font-bold text-red-700 mb-4">Pending ({{ $orders->where('status', 'pending')->count() }})</h3>
+            <!-- Kolom Pending -->
+            <div class="bg-white p-4 rounded-lg shadow-md border-t-4 border-red-500">
+                <h3 class="text-lg font-bold text-red-700 mb-4 uppercase tracking-wider">Pending</h3>
                 <div class="space-y-4">
                     @foreach($orders->where('status', 'pending') as $order)
-                        @include('partials.employee.order-card', ['order' => $order, 'status_color' => 'bg-red-200 text-red-700'])
+                        {{-- Logika filter Alpine.js --}}
+                        <div x-show="filter === 'all' || filter === '{{ $order->order_type }}'" 
+                             x-transition:enter="transition ease-out duration-300"
+                             x-transition:enter-start="opacity-0 transform scale-95">
+                            @include('partials.employee.order-card', ['order' => $order])
+                        </div>
                     @endforeach
                 </div>
             </div>
-            <div class="bg-white p-4 rounded-lg shadow-md">
-                <h3 class="text-lg font-bold text-yellow-700 mb-4">Dalam Proses ({{ $orders->whereIn('status', ['accepted', 'ready_for_pickup', 'on_delivery'])->count() }})</h3>
+            <!-- Kolom Dalam Proses -->
+            <div class="bg-white p-4 rounded-lg shadow-md border-t-4 border-yellow-500">
+                <h3 class="text-lg font-bold text-yellow-700 mb-4 uppercase tracking-wider">Dalam Proses</h3>
                 <div class="space-y-4">
-                    @foreach($orders->whereIn('status', ['accepted', 'ready_for_pickup', 'on_delivery']) as $order)
-                        @include('partials.employee.order-card', ['order' => $order, 'status_color' => 'bg-yellow-200 text-yellow-700'])
+                    @foreach($orders->whereIn('status', ['accepted', 'preparing', 'ready_for_delivery', 'on_delivery']) as $order)
+                        <div x-show="filter === 'all' || filter === '{{ $order->order_type }}'" 
+                             x-transition:enter="transition ease-out duration-300"
+                             x-transition:enter-start="opacity-0 transform scale-95">
+                            @include('partials.employee.order-card', ['order' => $order])
+                        </div>
                     @endforeach
                 </div>
             </div>
-            <div class="bg-white p-4 rounded-lg shadow-md">
-                <h3 class="text-lg font-bold text-green-700 mb-4">Selesai ({{ $orders->whereIn('status', ['completed', 'delivered'])->count() }})</h3>
+            <!-- Kolom Selesai -->
+            <div class="bg-white p-4 rounded-lg shadow-md border-t-4 border-green-500">
+                <h3 class="text-lg font-bold text-green-700 mb-4 uppercase tracking-wider">Selesai</h3>
                 <div class="space-y-4">
                     @foreach($orders->whereIn('status', ['completed', 'delivered']) as $order)
-                        @include('partials.employee.order-card', ['order' => $order, 'status_color' => 'bg-green-200 text-green-700'])
+                        <div x-show="filter === 'all' || filter === '{{ $order->order_type }}'" 
+                             x-transition:enter="transition ease-out duration-300"
+                             x-transition:enter-start="opacity-0 transform scale-95">
+                            @include('partials.employee.order-card', ['order' => $order])
+                        </div>
                     @endforeach
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- <div class="bg-white rounded-2xl shadow-xl p-6 mt-8">
-        <h2 class="text-2xl font-bold mb-4 text-gray-700 flex items-center gap-2">
-            <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3"/></svg>
-            Daftar Pengantaran
-        </h2>
-        <div class="overflow-x-auto">
-            <table class="min-w-full bg-white rounded-xl shadow border border-gray-200 text-sm">
-                <thead class="bg-gray-50 sticky top-0 z-10">
-                    <tr>
-                        <th class="px-3 py-3 text-center font-bold text-gray-700 uppercase tracking-wider">ID</th>
-                        <th class="px-3 py-3 text-center font-bold text-gray-700 uppercase tracking-wider">Order ID</th>
-                        <th class="px-3 py-3 text-center font-bold text-gray-700 uppercase tracking-wider">Kurir</th>
-                        <th class="px-3 py-3 text-center font-bold text-gray-700 uppercase tracking-wider">Status</th>
-                        <th class="px-3 py-3 text-center font-bold text-gray-700 uppercase tracking-wider">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($deliveries as $delivery)
-                    <tr class="transition-colors duration-200 hover:bg-gray-50 group border-b border-gray-100">
-                        <td class="px-3 py-2 text-center font-semibold">{{ $delivery->id }}</td>
-                        <td class="px-3 py-2 text-center">#{{ $delivery->order_id }}</td>
-                        <td class="px-3 py-2 text-center">{{ $delivery->deliveryEmployee->name ?? '-' }}</td>
-                        <td class="px-3 py-2 text-center">
-                            @php
-                                $status_class = '';
-                                switch($delivery->status) {
-                                    case 'delivered':
-                                        $status_class = 'bg-green-100 text-green-700';
-                                        break;
-                                    case 'on_delivery':
-                                        $status_class = 'bg-yellow-100 text-yellow-700';
-                                        break;
-                                    default:
-                                        $status_class = 'bg-blue-100 text-blue-700';
-                                        break;
-                                }
-                            @endphp
-                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold {{ $status_class }}">
-                                {{ ucfirst(str_replace('_', ' ', $delivery->status)) }}
-                            </span>
-                        </td>
-                        <td class="px-3 py-2 text-center">
-                            <a href="{{ route('pegawai.deliveries.detail', $delivery->id) }}" class="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded shadow transition-all duration-200 text-xs font-semibold">Detail</a>
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-    </div> -->
 </div>
 @endsection
+
+<!-- Script untuk refresh otomatis -->
+@push('scripts')
+<script>
+    // Refresh halaman otomatis setiap 60 detik (60000 milidetik)
+    // Agar status "SLA Timer" dan antrean selalu up-to-date
+    setTimeout(function(){
+       window.location.reload(1);
+    }, 10000); 
+</script>
+@endpush

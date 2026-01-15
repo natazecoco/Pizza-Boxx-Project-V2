@@ -23,14 +23,79 @@
             </div>
         @endif
         
-        <form method="POST" action="{{ route('pegawai.qr.verify') }}" class="flex flex-col gap-4">
+        <!-- <form method="POST" action="{{ route('pegawai.qr.verify') }}" class="flex flex-col gap-4">
             @csrf
+            <input type="hidden" name="order_id" value="{{ $order->id }}">
             <label for="pin" class="block font-semibold mb-1">PIN Pesanan</label>
             <input type="text" name="pin" id="pin"
                    class="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-400"
                    placeholder="e.g. 123456" required autofocus>
             <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition-colors mt-2">Verifikasi</button>
+        </form> -->
+
+        <form id="verifyForm" class="flex flex-col gap-4">
+            @csrf
+            <input type="hidden" name="order_id" value="{{ $order->id }}">
+            <label for="pin" class="block font-semibold mb-1">PIN Pesanan</label>
+            <input type="text" name="pin" id="pin"
+                class="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-400"
+                placeholder="e.g. 123456" required autofocus>
+            <button type="submit" id="btnVerify" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition-colors mt-2 flex items-center justify-center">
+                <span>Verifikasi</span>
+            </button>
         </form>
     </div>
 </div>
+
+<script>
+document.getElementById('verifyForm').addEventListener('submit', function(e) {
+    e.preventDefault(); // Mencegah pindah halaman otomatis
+    
+    const btn = document.getElementById('btnVerify');
+    const formData = new FormData(this);
+
+    // Tampilkan loading sederhana
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Memproses...';
+
+    fetch("{{ route('pegawai.qr.verify') }}", {
+        method: "POST",
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // TAMPILKAN PESAN DULU DI SINI
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: data.message,
+                showConfirmButton: false,
+                timer: 2500, // Menunggu 2.5 detik agar terbaca
+                timerProgressBar: true
+            }).then(() => {
+                // BARU PINDAH KE DASHBOARD SETELAH PESAN TERBACA
+                window.location.href = "{{ route('pegawai.dashboard') }}";
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal',
+                text: data.message
+            });
+            btn.disabled = false;
+            btn.innerHTML = 'Verifikasi';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        btn.disabled = false;
+        btn.innerHTML = 'Verifikasi';
+    });
+});
+</script>
+
 @endsection

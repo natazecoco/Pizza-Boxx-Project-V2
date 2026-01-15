@@ -71,21 +71,32 @@ Route::view('/contact', 'pages.contact')->name('contact');
 
 // ================================= RUTE PEGAWAI & ADMIN =================================
 Route::middleware(['auth:employee'])->prefix('pegawai')->group(function () {
+    // Dashboard Pegawai
     Route::get('/dashboard', [PegawaiDashboardController::class, 'index'])->name('pegawai.dashboard');
-    
-    // Rute orders dipindahkan ke OrderController
+    // Manajemen Pesanan
     Route::get('/orders', [OrderController::class, 'index'])->name('pegawai.orders.index');
+    // Update status pesanan
     Route::post('/orders/{order}/update-status', [OrderController::class, 'updateOrderStatus'])->name('pegawai.orders.update-status');
-    
-    Route::get('/deliveries', [PegawaiDeliveryController::class, 'index'])->name('pegawai.deliveries.index');
-    Route::get('/deliveries/create', [PegawaiDeliveryController::class, 'create'])->name('pegawai.deliveries.create');
-    Route::post('/deliveries', [PegawaiDeliveryController::class, 'store'])->name('pegawai.deliveries.store');
-    Route::get('/deliveries/{delivery}/detail', [PegawaiDeliveryController::class, 'detail'])->name('pegawai.deliveries.detail');
-    Route::post('/deliveries/{delivery}/update', [PegawaiDeliveryController::class, 'update'])->name('pegawai.deliveries.update');
-    
-    Route::get('/qr/verify', [QrVerificationController::class, 'showForm'])->name('pegawai.qr.verify.form');
-    Route::post('/qr/verify', [QrVerificationController::class, 'verify'])->name('pegawai.qr.verify');
 
+    // Detail Pesanan
+    Route::get('/orders/{id}', [OrderController::class, 'show'])->name('pegawai.orders.show');
+    // Update status item pesanan
+    Route::get('/deliveries', [PegawaiDeliveryController::class, 'index'])->name('pegawai.deliveries.index');
+    // Detail Pengantaran
+    Route::get('/deliveries/{id}', [PegawaiDeliveryController::class, 'show'])->name('pegawai.deliveries.show');
+    // Buat Pengantaran Baru
+    Route::get('/deliveries/create', [PegawaiDeliveryController::class, 'create'])->name('pegawai.deliveries.create');
+    // Simpan Pengantaran Baru
+    Route::post('/deliveries', [PegawaiDeliveryController::class, 'store'])->name('pegawai.deliveries.store');
+    // Detail Pengantaran
+    Route::get('/deliveries/{delivery}/detail', [PegawaiDeliveryController::class, 'detail'])->name('pegawai.deliveries.detail');
+    // Update Pengantaran
+    Route::post('/deliveries/{delivery}/update', [PegawaiDeliveryController::class, 'update'])->name('pegawai.deliveries.update');
+    // Verifikasi QR/PIN
+    Route::get('/qr/verify', [QrVerificationController::class, 'showForm'])->name('pegawai.qr.verify.form');
+    // Proses Verifikasi QR/PIN
+    Route::post('/qr/verify', [QrVerificationController::class, 'verify'])->name('pegawai.qr.verify');
+    // Rute logout untuk pegawai.
     Route::post('/logout', [AuthController::class, 'employeeLogout'])->name('pegawai.logout');
 });
 

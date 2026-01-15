@@ -32,29 +32,38 @@ class OrderController extends Controller
         return view('pages.pegawai.orders', compact('orders', 'deliveries'));
     }
 
-    /**
-     * Mengubah status pesanan.
-     */
     public function updateOrderStatus(Request $request, Order $order)
     {
-        $request->validate(['status' => 'required|string']);
+        // 1. Daftar status yang diperbolehkan di sistem kamu
+        $validStatuses = [
+            'pending', 'accepted', 'preparing', 'ready_for_delivery', 
+            'on_delivery', 'delivered', 'completed', 'cancelled'
+        ];
 
-        $order->status = $request->input('status');
+        // 2. Validasi input
+        $request->validate([
+            'status' => 'required|in:' . implode(',', $validStatuses),
+        ]);
+
+        // 3. Logika Tambahan: Proteksi agar Pickup tidak bisa "On Delivery"
+        if ($order->order_type === 'pickup' && $request->status === 'on_delivery') {
+            return back()->with('error', 'Pesanan pickup tidak memerlukan pengantaran.');
+        }
+
+        // 4. Simpan perubahan
+        $order->status = $request->status;
         $order->save();
 
-        return back()->with('success', 'Status pesanan berhasil diubah.');
+        return back()->with('success', 'Status pesanan #' . $order->id . ' berhasil diperbarui.');
     }
 
-    /**
-     * Mengubah status pesanan dari tombol di card (misalnya 'Terima Pesanan').
-     */
-    public function updateStatus(Request $request, Order $order)
+
+    public function show($id)
     {
-        $request->validate(['status' => 'required|string']);
+        // Cari pesanan berdasarkan ID, jika tidak ada maka error 404
+        $order = Order::with('orderItems')->findOrFail($id);
 
-        $order->status = $request->input('status');
-        $order->save();
-
-        return back()->with('success', 'Status pesanan berhasil diubah.');
+        // Kirim data ke halaman detail
+        return view('pages.pegawai.show', compact('order'));
     }
 }
