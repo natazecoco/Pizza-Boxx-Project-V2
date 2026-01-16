@@ -41,10 +41,17 @@ class UserResource extends Resource
                     ->dehydrated(fn (?string $state): bool => filled($state))
                     ->required(fn (string $operation): bool => $operation === 'create')
                     ->label('Password'),
-
+                Select::make('location_id')
+                    ->relationship('location', 'name') // Mengambil data dari relasi 'location' di model User
+                    ->label('Lokasi Cabang')
+                    ->placeholder('Pilih Cabang')
+                    ->searchable()
+                    ->preload()
+                    ->nullable(), // Izinkan kosong jika user adalah Admin Pusat
                 Select::make('roles')
                     ->relationship('roles', 'name')
-                    ->multiple()
+                    // ->multiple()
+                    ->placeholder('Pilih Peran')
                     ->preload()
                     ->required()
                     ->label('Peran'),

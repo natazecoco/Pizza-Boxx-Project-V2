@@ -13,8 +13,7 @@ use Filament\Panel;
 
 class User extends Authenticatable implements FilamentUser
 {
-    use HasFactory, Notifiable, HasRoles;
-    use HasApiTokens, HasFactory, Notifiable, HasRoles; // Tambahkan HasApiTokens di sini
+    use HasApiTokens, HasFactory, Notifiable, HasRoles;
 
     /**
      * The attributes that are mass assignable.
@@ -55,7 +54,7 @@ class User extends Authenticatable implements FilamentUser
      */
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->hasAnyRole(['admin', 'employee']);
+        return $this->hasAnyRole(['admin']);
     }
 
     /**

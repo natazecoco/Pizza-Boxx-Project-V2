@@ -15,12 +15,30 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php', // Pastikan rute konsol dimuat
         health: '/up', // Endpoint kesehatan aplikasi
     )
+    // ->withMiddleware(function (Middleware $middleware) {
+    //     $middleware->alias([
+    //         'role' => RoleMiddleware::class,
+    //         'permission' => PermissionMiddleware::class,
+    //     ]);
+    // })
+
+    // Ganti middleware Role dengan middleware kustom buatan
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
-            'role' => RoleMiddleware::class,
-            'permission' => PermissionMiddleware::class,
+            // Ganti RoleMiddleware milik Spatie dengan file buatan sendiri
+            'role' => \App\Http\Middleware\CheckRole::class, 
+            
+            // Tetap biarkan permission jika kamu membutuhkannya nanti
+            'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
         ]);
     })
+
     ->withExceptions(function (Exceptions $exceptions) {
-        //
-    })->create();
+        $exceptions->render(function (\Illuminate\Auth\Access\AuthorizationException $e, $request) {
+            // Jika user mencoba akses yang dilarang, balikkan ke dashboard dengan pesan
+            return redirect()->route('pegawai.dashboard')
+                ->with('error', 'Maaf, area tersebut hanya untuk Admin Pusat.');
+        });
+    })
+
+    ->create();

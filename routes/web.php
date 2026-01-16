@@ -70,7 +70,7 @@ Route::view('/about', 'pages.about')->name('about');
 Route::view('/contact', 'pages.contact')->name('contact');
 
 // ================================= RUTE PEGAWAI & ADMIN =================================
-Route::middleware(['auth:employee'])->prefix('pegawai')->group(function () {
+Route::middleware(['auth:employee', 'role:admin,employee'])->prefix('pegawai')->group(function () {
     // Dashboard Pegawai
     Route::get('/dashboard', [PegawaiDashboardController::class, 'index'])->name('pegawai.dashboard');
     // Manajemen Pesanan
@@ -101,6 +101,6 @@ Route::middleware(['auth:employee'])->prefix('pegawai')->group(function () {
 });
 
 // ================================= RUTE KHUSUS ADMIN =================================
-Route::middleware(['auth:employee', 'role:admin'])->prefix('admin')->group(function () {
-    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
-});
+// Route::middleware(['auth:employee', 'role:admin'])->prefix('admin')->group(function () {
+//     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('filament.admin.pages.dashboard');
+// });

@@ -27,6 +27,7 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Tables\Filters\SelectFilter;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 
 class OrderResource extends Resource
 {
@@ -357,6 +358,11 @@ class OrderResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    // Ekspor ke Excel menggunakan paket filament-excel
+                    ExportBulkAction::make()
+                    ->label('Ekspor ke Excel')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->color('success'),
                 ]),
             ]);
     }

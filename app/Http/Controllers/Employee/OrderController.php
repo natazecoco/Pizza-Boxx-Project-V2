@@ -6,18 +6,29 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Models\Delivery;
+use Illuminate\Support\Facades\Auth;
 
 class OrderController extends Controller
 {
     /**
-     * Menampilkan dashboard pegawai dengan daftar pesanan dan pengantaran.
+     * Menampilkan daftar pesanan yang difilter berdasarkan lokasi pegawai.
      */
     public function index(Request $request)
     {
+        $user = Auth::user();
         $status = $request->get('status');
 
-        $ordersQuery = Order::with(['user', 'location', 'orderItems'])
-                      ->orderBy('created_at');
+        // --- FILTER SAKTI DIMULAI ---
+        // Kita mulai query Order
+        $ordersQuery = Order::with(['user', 'location', 'orderItems']);
+
+        // JIKA yang login BUKAN Admin, maka WAJIB filter berdasarkan location_id si pegawai
+        if (!$user->hasRole('admin')) {
+            $ordersQuery->where('location_id', $user->location_id);
+        }
+        // --- FILTER SAKTI SELESAI ---
+
+        $ordersQuery->orderBy('created_at');
 
         if ($status) {
             $ordersQuery->where('status', $status);
@@ -25,9 +36,17 @@ class OrderController extends Controller
 
         $orders = $ordersQuery->get();
 
-        $deliveries = Delivery::with(['order', 'deliveryEmployee'])
-                            ->orderByDesc('assigned_at')
-                            ->get();
+        // --- FILTER SAKTI UNTUK PENGANTARAN ---
+        $deliveriesQuery = Delivery::with(['order', 'deliveryEmployee']);
+
+        if (!$user->hasRole('admin')) {
+            // Karena location_id ada di tabel orders, kita gunakan whereHas
+            $deliveriesQuery->whereHas('order', function($q) use ($user) {
+                $q->where('location_id', $user->location_id);
+            });
+        }
+
+        $deliveries = $deliveriesQuery->orderByDesc('assigned_at')->get();
         
         return view('pages.pegawai.orders', compact('orders', 'deliveries'));
     }
@@ -57,13 +76,20 @@ class OrderController extends Controller
         return back()->with('success', 'Status pesanan #' . $order->id . ' berhasil diperbarui.');
     }
 
-
     public function show($id)
     {
-        // Cari pesanan berdasarkan ID, jika tidak ada maka error 404
-        $order = Order::with('orderItems')->findOrFail($id);
+        $user = Auth::user();
+        
+        // Cari pesanan dengan proteksi lokasi
+        $query = Order::with('orderItems');
 
-        // Kirim data ke halaman detail
+        // Pastikan pegawai tidak bisa "mengintip" detail pesanan cabang lain lewat URL
+        if (!$user->hasRole('admin')) {
+            $query->where('location_id', $user->location_id);
+        }
+
+        $order = $query->findOrFail($id);
+
         return view('pages.pegawai.show', compact('order'));
     }
 }

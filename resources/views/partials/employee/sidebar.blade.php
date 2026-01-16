@@ -51,9 +51,9 @@
                 <div class="pt-6 pb-2 px-4 border-t border-white/10 mt-6">
                     <p class="text-[10px] font-black uppercase tracking-[0.2em] text-white/50">Otoritas Admin</p>
                 </div>
-                <a href="{{ route('admin.dashboard') }}"
+                <a href="{{ route('filament.admin.pages.dashboard') }}"
                    class="flex items-center gap-3 px-4 py-4 rounded-2xl font-bold transition-all duration-300
-                          {{ request()->routeIs('admin.dashboard') ? 'bg-red-800 text-white shadow-inner' : 'text-white/80 hover:bg-white/10 hover:text-white' }}">
+                          {{ request()->routeIs('filament.admin.pages.dashboard') ? 'bg-red-800 text-white shadow-inner' : 'text-white/80 hover:bg-white/10 hover:text-white' }}">
                     <i class="fa-solid fa-user-shield w-5"></i>
                     <span>Admin Central</span>
                 </a>

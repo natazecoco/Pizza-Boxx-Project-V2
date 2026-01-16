@@ -37,14 +37,22 @@ class AuthController extends Controller
             $request->session()->regenerate();
 
             if ($isEmployeeLogin) {
-                // Jika login sebagai pegawai, periksa apakah pengguna memiliki peran 'admin' atau 'employee'
-                if ($user->hasAnyRole(['admin', 'employee'])) {
+                // Gunakan hasRole('admin', 'employee') untuk memastikan guard-nya tepat
+                // Atau biarkan Spatie mencari di semua guard dengan cara ini:
+                
+                if ($user->hasRole('admin')) {
+                    // HINT: Jika kamu pakai Filament, rutenya biasanya bukan 'admin.dashboard'
+                    // tapi 'filament.admin.pages.dashboard'
+                    return redirect()->route('filament.admin.pages.dashboard'); 
+                } 
+                
+                if ($user->hasRole('employee')) {
                     return redirect()->route('pegawai.dashboard');
                 }
-                
-                // Jika tidak memiliki peran yang sesuai, logout paksa
+
+                // Jika tidak punya role yang pas
                 Auth::guard($guard)->logout();
-                return back()->withInput()->withErrors(['email' => 'Akses terbatas untuk pegawai.']);
+                return back()->withInput()->withErrors(['email' => 'Role tidak dikenali.']);
             }
             
             // Jika login sebagai pelanggan, pastikan pengguna TIDAK memiliki peran admin/pegawai
