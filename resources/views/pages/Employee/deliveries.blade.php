@@ -36,28 +36,22 @@
                         <p class="text-sm font-black text-gray-800">Rp{{ number_format($order->total_amount) }}</p>
                     </div>
 
-                    <div class="p-4 bg-white border-t grid grid-cols-2 gap-2">
-                        {{-- Tombol untuk pindah ke halaman DETAIL --}}
-                        <a href="{{ route('pegawai.deliveries.show', $order->id) }}" 
-                           class="flex items-center justify-center bg-gray-100 text-gray-600 py-3 rounded-xl text-xs font-bold hover:bg-gray-200 transition-all">
-                            Lihat 
-                        </a>
-
-                        {{-- Tombol Update Status Langsung --}}
+                    <div class="p-4 bg-white border-t">
                         @if($order->status == 'on_delivery')
-                            <form action="{{ route('pegawai.orders.update-status', $order->id) }}" method="POST">
-                                @csrf
-                                <input type="hidden" name="status" value="delivered">
-                                <button type="submit" class="w-full bg-green-500 text-white py-3 rounded-xl text-xs font-bold hover:bg-green-600 transition-all">
-                                    Selesai
-                                </button>
-                            </form>
+                            {{-- Satu tombol besar untuk navigasi --}}
+                            <a href="{{ route('pegawai.deliveries.show', $order->id) }}" 
+                            class="flex items-center justify-center bg-indigo-600 text-white py-4 rounded-xl text-xs font-black hover:bg-indigo-700 transition-all gap-2 shadow-md uppercase tracking-wider">
+                                <i class="fas fa-location-arrow"></i> Buka Navigasi & PIN
+                            </a>
                         @else
+                            {{-- Satu tombol besar untuk mulai berangkat --}}
                             <form action="{{ route('pegawai.orders.update-status', $order->id) }}" method="POST">
                                 @csrf
                                 <input type="hidden" name="status" value="on_delivery">
-                                <button type="submit" class="w-full bg-purple-600 text-white py-3 rounded-xl text-xs font-bold hover:bg-purple-700 transition-all">
-                                    Mulai Antar
+                                <input type="hidden" name="redirect_type" value="to_detail"> 
+                                
+                                <button type="submit" class="w-full bg-purple-600 text-white py-4 rounded-xl text-xs font-black hover:bg-purple-700 transition-all flex items-center justify-center gap-2 shadow-md uppercase tracking-wider">
+                                    <i class="fas fa-motorcycle"></i> Mulai Antar Sekarang
                                 </button>
                             </form>
                         @endif

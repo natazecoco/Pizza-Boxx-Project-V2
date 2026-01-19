@@ -11,15 +11,15 @@ use App\Http\Controllers\Customer\HomeController;
 use App\Http\Controllers\Customer\MenuController;
 use App\Http\Controllers\Customer\CartController;
 use App\Http\Controllers\Customer\CheckoutController;
-use App\Http\Controllers\Customer\UserDashboardController;
-use App\Http\Controllers\Customer\UserProfileController;
-use App\Http\Controllers\Customer\UserAddressController;
+use App\Http\Controllers\Customer\CustomerDashboardController;
+use App\Http\Controllers\Customer\ProfileController;
+use App\Http\Controllers\Customer\AddressController;
 
 // Gunakan semua Controller Pegawai dari folder Employee
-use App\Http\Controllers\Employee\PegawaiDashboardController;
+use App\Http\Controllers\Employee\EmployeeDashboardController;
 use App\Http\Controllers\Employee\OrderController;
-use App\Http\Controllers\Employee\PegawaiDeliveryController;
-use App\Http\Controllers\Employee\PegawaiOrderDetailController;
+use App\Http\Controllers\Employee\DeliveryController;
+use App\Http\Controllers\Employee\OrderDetailController;
 use App\Http\Controllers\Employee\QrVerificationController;
 
 // ================================= AUTHENTIKASI =================================
@@ -57,12 +57,15 @@ Route::group([], function () {
     });
     
     Route::middleware('auth:web')->group(function () {
-        Route::get('/dashboard', [UserDashboardController::class, 'index'])->name('user.dashboard');
-        Route::get('/profile', [UserProfileController::class, 'show'])->name('user.profile');
-        Route::put('/profile', [UserProfileController::class, 'update'])->name('user.profile.update');
-        Route::get('/profile/address/create', [UserAddressController::class, 'create'])->name('user.address.create');
-        Route::post('/profile/address', [UserAddressController::class, 'store'])->name('user.address.store');
-        Route::delete('/profile/address/{address}', [UserAddressController::class, 'delete'])->name('user.address.delete');
+        Route::get('/dashboard', [CustomerDashboardController::class, 'index'])->name('user.dashboard');
+        Route::get('/profile', [ProfileController::class, 'show'])->name('user.profile');
+        Route::put('/profile', [ProfileController::class, 'update'])->name('user.profile.update');
+        Route::get('/profile/address/create', [AddressController::class, 'create'])->name('user.address.create');
+        Route::post('/profile/address', [AddressController::class, 'store'])->name('user.address.store');
+        Route::delete('/profile/address/{address}', [AddressController::class, 'delete'])->name('user.address.delete');        
+        // Detail & Tracking Pesanan
+        Route::get('/dashboard/order/{id}', [CustomerDashboardController::class, 'show'])->name('user.order.show');
+        Route::post('/dashboard/order/{id}/complete', [CustomerDashboardController::class, 'complete'])->name('user.order.complete');
     });
 });
 
@@ -72,7 +75,7 @@ Route::view('/contact', 'pages.contact')->name('contact');
 // ================================= RUTE PEGAWAI & ADMIN =================================
 Route::middleware(['auth:employee', 'role:admin,employee'])->prefix('pegawai')->group(function () {
     // Dashboard Pegawai
-    Route::get('/dashboard', [PegawaiDashboardController::class, 'index'])->name('pegawai.dashboard');
+    Route::get('/dashboard', [EmployeeDashboardController::class, 'index'])->name('pegawai.dashboard');
     // Manajemen Pesanan
     Route::get('/orders', [OrderController::class, 'index'])->name('pegawai.orders.index');
     // Update status pesanan
@@ -81,17 +84,17 @@ Route::middleware(['auth:employee', 'role:admin,employee'])->prefix('pegawai')->
     // Detail Pesanan
     Route::get('/orders/{id}', [OrderController::class, 'show'])->name('pegawai.orders.show');
     // Update status item pesanan
-    Route::get('/deliveries', [PegawaiDeliveryController::class, 'index'])->name('pegawai.deliveries.index');
+    Route::get('/deliveries', [DeliveryController::class, 'index'])->name('pegawai.deliveries.index');
     // Detail Pengantaran
-    Route::get('/deliveries/{id}', [PegawaiDeliveryController::class, 'show'])->name('pegawai.deliveries.show');
+    Route::get('/deliveries/{id}', [DeliveryController::class, 'show'])->name('pegawai.deliveries.show');
     // Buat Pengantaran Baru
-    Route::get('/deliveries/create', [PegawaiDeliveryController::class, 'create'])->name('pegawai.deliveries.create');
+    Route::get('/deliveries/create', [DeliveryController::class, 'create'])->name('pegawai.deliveries.create');
     // Simpan Pengantaran Baru
-    Route::post('/deliveries', [PegawaiDeliveryController::class, 'store'])->name('pegawai.deliveries.store');
+    Route::post('/deliveries', [DeliveryController::class, 'store'])->name('pegawai.deliveries.store');
     // Detail Pengantaran
-    Route::get('/deliveries/{delivery}/detail', [PegawaiDeliveryController::class, 'detail'])->name('pegawai.deliveries.detail');
+    Route::get('/deliveries/{delivery}/detail', [DeliveryController::class, 'detail'])->name('pegawai.deliveries.detail');
     // Update Pengantaran
-    Route::post('/deliveries/{delivery}/update', [PegawaiDeliveryController::class, 'update'])->name('pegawai.deliveries.update');
+    Route::post('/deliveries/{delivery}/update', [DeliveryController::class, 'update'])->name('pegawai.deliveries.update');
     // Verifikasi QR/PIN
     Route::get('/qr/verify', [QrVerificationController::class, 'showForm'])->name('pegawai.qr.verify.form');
     // Proses Verifikasi QR/PIN

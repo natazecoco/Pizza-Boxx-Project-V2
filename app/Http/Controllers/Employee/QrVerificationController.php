@@ -13,7 +13,7 @@ class QrVerificationController extends Controller
     public function showForm(Request $request)
     {
         $order = Order::findOrFail($request->query('order_id'));
-        return view('pages.pegawai.verify', compact('order'));
+        return view('pages.employee.verify', compact('order'));
     }
 
     // Memproses verifikasi QR/PIN

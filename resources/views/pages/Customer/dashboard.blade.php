@@ -81,9 +81,9 @@
                         </td>
 
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <a href="{{ route('checkout.success', ['order_id' => $order->id]) }}"
-                               class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all">
-                                <i class="fas fa-info-circle mr-1"></i> Detail
+                            <a href="{{ route('user.order.show', $order->id) }}" 
+                                class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full shadow-sm text-white bg-orange-600 hover:bg-orange-700 transition-all">
+                                <i class="fas fa-truck mr-1"></i> Lacak Pesanan
                             </a>
                         </td>
                     </tr>

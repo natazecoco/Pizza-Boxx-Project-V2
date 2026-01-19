@@ -4,37 +4,24 @@
         <div class="flex-grow">
             <h3 class="text-lg font-bold text-gray-800">#{{ $order->id }} - {{ $order->customer_name }}</h3>
             
+            {{-- TARUH DI SINI: SLA TIMER REAL-TIME (VERSI VANILLA JS / CSP SAFE) --}}
             <div class="flex items-center gap-2 mt-1">
-                {{-- SLA TIMER (Fitur Baru) --}}
-                @php
-                    // 1. Ambil waktu sekarang dan waktu pesanan
-                    $startTime = $order->created_at;
-                    $now = now(); 
-
-                    // 2. Hitung selisih untuk label jam/menit/detik
-                    $diff = $startTime->diff($now);
-                    $parts = [];
-                    if ($diff->h > 0) $parts[] = $diff->h . 'j';
-                    if ($diff->i > 0) $parts[] = $diff->i . 'm';
-                    $parts[] = $diff->s . 'd';
-                    $timeLabel = implode(' ', $parts);
-
-                    // 3. Logika Urgensi (20 menit)
-                    $totalMinutes = $startTime->diffInMinutes($now);
-                    $isUrgent = ($totalMinutes >= 20 && in_array($order->status, ['pending', 'accepted', 'preparing']));
-                @endphp
-
-                <span class="text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider flex items-center gap-1
-                    @if($isUrgent) bg-red-600 text-white animate-pulse @else bg-gray-100 text-gray-500 @endif">
-                    <i class="fas fa-hourglass-half text-[8px]"></i> {{ $timeLabel }}
+                <span class="sla-timer-badge px-2 py-0.5 rounded font-bold uppercase tracking-wider flex items-center gap-1 bg-gray-100 text-gray-500 transition-all duration-500"
+                    id="timer-{{ $order->id }}" 
+                    data-start="{{ $order->created_at->toIso8601String() }}"
+                    data-status="{{ $order->status }}"
+                    {{-- Tentukan target SLA dalam detik --}}
+                    data-sla="{{ $order->status == 'pending' ? 300 : ($order->status == 'preparing' ? 900 : 1200) }}">
+                    <i class="fas fa-hourglass-half text-[8px]"></i> 
+                    <span class="timer-text text-[10px]">0d</span>
                 </span>
 
-                <span class="text-[10px] text-gray-400 font-medium">| {{ $startTime->format('H:i') }} WIB</span>
+                <span class="text-[10px] text-gray-400 font-medium">| {{ $order->created_at->format('H:i') }} WIB</span>
             </div>
         </div>
 
         <div class="flex items-center gap-3">
-            {{-- STATUS BADGE (Logika Asli Kamu) --}}
+            {{-- STATUS BADGE --}}
             <span class="inline-block px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest
                 @if($order->status == 'pending') bg-yellow-100 text-yellow-700 animate-pulse
                 @elseif($order->status == 'accepted') bg-blue-100 text-blue-700
@@ -44,24 +31,25 @@
                 @endif">
                 {{ str_replace('_', ' ', $order->status) }}
             </span>
-            {{-- Tombol Panah Accordion --}}
             <svg class="w-4 h-4 text-gray-400 transition-transform duration-200" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
         </div>
     </div>
 
+    {{-- Ringkasan Item --}}
     <div class="mt-4 p-3 bg-red-50/50 rounded-lg border border-dashed border-red-200">
         <ul class="space-y-1">
-            @foreach($order->orderItems->take(2) as $item) {{-- Tampilkan 2 item pertama saja untuk ringkasan --}}
+            @foreach($order->orderItems->take(2) as $item)
                 <li class="text-xs text-gray-700 flex justify-between">
                     <span><span class="font-bold">{{ $item->quantity }}x</span> {{ $item->product_name }}</span>
                 </li>
             @endforeach
             @if($order->orderItems->count() > 2)
-                <li class="text-[10px] text-gray-400 italic">+ {{ $order->order_items->count() - 2 }} item lainnya...</li>
+                <li class="text-[10px] text-gray-400 italic">+ {{ $order->orderItems->count() - 2 }} item lainnya...</li>
             @endif
         </ul>
     </div>
 
+    {{-- Detail Accordion --}}
     <div x-show="open" 
          x-transition:enter="transition ease-out duration-300"
          x-transition:enter-start="opacity-0 transform -translate-y-2"
@@ -95,62 +83,61 @@
         </div>
     </div>
     
+    {{-- Action Buttons --}}
     <div class="flex justify-end gap-2 mt-4 pt-4 border-t border-gray-100">
         @switch($order->status)
             @case('pending')
-                <form action="{{ route('pegawai.orders.update-status', $order->id) }}" method="POST">
+                <form action="{{ route('pegawai.orders.update-status', $order->id) }}" method="POST" class="flex-grow">
                     @csrf
                     <input type="hidden" name="status" value="accepted">
-                    <button type="submit" class="px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-lg shadow hover:bg-red-700 transition-colors">
-                        Terima Pesanan
+                    <button type="submit" class="w-full px-4 py-2 bg-red-600 text-white text-xs font-black rounded-lg shadow hover:bg-red-700 transition-all uppercase tracking-tighter">
+                        <i class="fas fa-check mr-1"></i> Terima
                     </button>
                 </form>
                 @break
 
             @case('accepted')
-                @if($order->order_type === 'delivery')
-                    <form action="{{ route('pegawai.orders.update-status', $order->id) }}" method="POST">
-                        @csrf
-                        <input type="hidden" name="status" value="on_delivery">
-                        <button type="submit" class="px-4 py-2 bg-purple-600 text-white text-xs font-bold rounded-lg shadow hover:bg-purple-700 transition-colors">
-                            Mulai Antar
-                        </button>
-                    </form>
-                @elseif($order->order_type === 'pickup')
-                    <form action="{{ route('pegawai.orders.update-status', $order->id) }}" method="POST">
-                        @csrf
-                        <input type="hidden" name="status" value="ready_for_delivery">
-                        <button type="submit" class="px-4 py-2 bg-green-600 text-white text-xs font-bold rounded-lg shadow hover:bg-green-700 transition-colors">
-                            Siap Diambil
-                        </button>
-                    </form>
-                @endif
+            @case('preparing')
+                <a href="{{ route('pegawai.orders.show', $order->id) }}" class="flex-grow px-4 py-2 bg-orange-500 text-white text-xs font-black rounded-lg text-center hover:bg-orange-600 transition-all uppercase tracking-tighter">
+                    <i class="fas fa-fire mr-1"></i> Proses Masak
+                </a>
                 @break
 
             @case('ready_for_delivery')
+            @case('ready_for_pickup')
                 @if($order->order_type === 'pickup')
-                    <a href="{{ route('pegawai.qr.verify.form', ['order_id' => $order->id]) }}" class="px-4 py-2 bg-teal-600 text-white text-xs font-bold rounded-lg shadow hover:bg-teal-700 transition-colors">
-                        Verifikasi PIN
-                    </a>
+                    <button type="button"
+                            @click="showPinModal = true; activeOrder = { id: '{{ $order->id }}', name: '{{ addslashes($order->customer_name) }}' }; pin = ''"
+                            class="flex-grow px-4 py-2 bg-teal-600 text-white text-xs font-black rounded-lg shadow hover:bg-teal-700 transition-all uppercase tracking-tighter">
+                        <i class="fas fa-key mr-1"></i> Verifikasi PIN
+                    </button>
+                @else
+                    <form action="{{ route('pegawai.orders.update-status', $order->id) }}" method="POST" class="flex-grow">
+                        @csrf
+                        <input type="hidden" name="status" value="on_delivery">
+                        <button type="submit" class="w-full px-4 py-2 bg-purple-600 text-white text-xs font-black rounded-lg shadow hover:bg-purple-700 transition-all uppercase tracking-tighter">
+                            <i class="fas fa-motorcycle mr-1"></i> Kirim
+                        </button>
+                    </form>
                 @endif
                 @break
 
             @case('on_delivery')
-                <form action="{{ route('pegawai.orders.update-status', $order->id) }}" method="POST">
+                <form action="{{ route('pegawai.orders.update-status', $order->id) }}" method="POST" class="flex-grow">
                     @csrf
                     <input type="hidden" name="status" value="delivered">
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg shadow hover:bg-indigo-700 transition-colors">
-                        Selesaikan Antar
+                    <button type="submit" class="w-full px-4 py-2 bg-indigo-600 text-white text-xs font-black rounded-lg shadow hover:bg-indigo-700 transition-all uppercase tracking-tighter">
+                        <i class="fas fa-map-marker-alt mr-1"></i> Tiba
                     </button>
                 </form>
                 @break
 
             @default
-                <span class="px-4 py-2 text-gray-400 text-xs font-bold italic">Pesanan Selesai</span>
+                <span class="flex-grow px-4 py-2 text-gray-400 text-[10px] font-bold italic border border-gray-200 rounded-lg text-center">SELESAI</span>
         @endswitch
 
         <a href="{{ route('pegawai.orders.show', $order->id) }}" 
-        class="px-4 py-2 bg-gray-100 text-gray-600 text-xs font-bold rounded-lg hover:bg-gray-200 transition-colors">
+           class="px-4 py-2 bg-gray-100 text-gray-600 text-xs font-bold rounded-lg hover:bg-gray-200 transition-colors">
             Detail
         </a>
     </div>

@@ -12,7 +12,12 @@
                 <h1 class="text-4xl font-bold text-green-600 mb-3">Pesanan Berhasil!</h1>
                 <p class="text-gray-700 text-lg mb-6">Terima kasih telah memesan di Pizza Boxx. Berikut detail pesanan Anda:</p>
                 <div class="w-full bg-gradient-to-r from-green-100 to-green-50 p-3 rounded-lg border-l-4 border-green-500 mb-6">
-                    <p class="text-green-700 font-medium">Nomor Pesanan: <span class="font-bold">#{{ $order->id }}</span></p>
+                    <p class="text-green-700 font-medium">
+                        Nomor Pesanan: 
+                        <a href="{{ route('user.order.show', $order->id) }}" class="font-bold underline hover:text-green-900">
+                            #{{ $order->id }} (Klik untuk Lacak)
+                        </a>
+                    </p>
                 </div>
             </div>
 

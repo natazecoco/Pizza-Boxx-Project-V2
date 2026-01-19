@@ -98,16 +98,16 @@ class Order extends Model
     public function getUserFriendlyStatusAttribute(): string
     {
         return match ($this->status) {
-            'pending' => 'Pesanan Diterima',
-            'accepted' => 'Sedang Diproses',
-            'ready_for_pickup' => 'Pesanan Siap Diambil',
-            'on_delivery' => 'Sedang Diantar',
-            'delivered' => 'Pesanan Tiba',
-            'completed' => 'Pesanan Selesai',
-            'cancelled' => 'Dibatalkan',
-            'failed' => 'Gagal Dikirim',
-            'refunded' => 'Refunded',
-            default => 'Status Tidak Diketahui',
+            'pending'           => 'Menunggu Konfirmasi',
+            'accepted'          => 'Pesanan Diterima',
+            'preparing'         => 'Sedang Dimasak',
+            'ready_for_delivery'=> 'Siap Diantar',
+            'ready_for_pickup'  => 'Siap Diambil',
+            'on_delivery'       => 'Kurir Menuju Lokasimu',
+            'delivered'         => 'Pesanan Tiba',
+            'completed'         => 'Selesai',
+            'cancelled'         => 'Dibatalkan',
+            default             => 'Status Tidak Diketahui',
         };
     }
 }

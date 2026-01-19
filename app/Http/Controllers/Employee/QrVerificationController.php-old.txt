@@ -14,7 +14,7 @@ class QrVerificationController extends Controller
      */
     public function showForm(Request $request)
     {
-        return view('pages.pegawai.verify');
+        return view('pages.employee.verify');
     }
 
     /**

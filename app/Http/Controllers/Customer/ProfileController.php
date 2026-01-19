@@ -7,13 +7,13 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Address;
 use App\Http\Controllers\Controller;
 
-class UserProfileController extends Controller
+class ProfileController extends Controller
 {
     public function show()
     {
         $addresses = Auth::user()->addresses ?? collect();
-        // Change the view path from 'user.profile' to 'pages.user.profile'
-        return view('pages.user.profile', compact('addresses'));
+        // Change the view path from 'user.profile' to 'pages.customer.profile'
+        return view('pages.customer.profile', compact('addresses'));
     }
 
     public function update(Request $request)

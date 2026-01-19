@@ -7,12 +7,12 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Address;
 use App\Http\Controllers\Controller;
 
-class UserAddressController extends Controller
+class AddressController extends Controller
 {
     public function create()
     {
-        // Change the view path from 'user.address-create' to 'pages.user.address-create'
-        return view('pages.user.address-create');
+        // Change the view path from 'user.address-create' to 'pages.customer.address-create'
+        return view('pages.customer.address-create');
     }
 
     public function store(Request $request)
