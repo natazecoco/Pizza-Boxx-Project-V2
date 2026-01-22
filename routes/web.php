@@ -2,11 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 
-// Gunakan Controller yang tidak masuk ke dalam sub-folder
 use App\Http\Controllers\AuthController;
 
-
-// Gunakan semua Controller Pelanggan dari folder Customer
+// Controller Pelanggan dari folder Customer
 use App\Http\Controllers\Customer\HomeController;
 use App\Http\Controllers\Customer\MenuController;
 use App\Http\Controllers\Customer\CartController;
@@ -15,7 +13,7 @@ use App\Http\Controllers\Customer\CustomerDashboardController;
 use App\Http\Controllers\Customer\ProfileController;
 use App\Http\Controllers\Customer\AddressController;
 
-// Gunakan semua Controller Pegawai dari folder Employee
+// Controller Pegawai dari folder Employee
 use App\Http\Controllers\Employee\EmployeeDashboardController;
 use App\Http\Controllers\Employee\OrderController;
 use App\Http\Controllers\Employee\DeliveryController;
@@ -41,6 +39,7 @@ Route::group([], function () {
     Route::get('/menu', [MenuController::class, 'index'])->name('menu.index');
     Route::get('/menu/{product}', [MenuController::class, 'show'])->name('menu.show');
 
+    // Rute Keranjang Belanja
     Route::prefix('cart')->group(function () {
         Route::get('/', [CartController::class, 'index'])->name('cart.index');
         Route::post('/add', [CartController::class, 'add'])->name('cart.add');
@@ -49,6 +48,7 @@ Route::group([], function () {
         Route::post('/clear', [CartController::class, 'clear'])->name('cart.clear');
     });
 
+    // Rute Checkout
     Route::prefix('checkout')->group(function () {
         Route::get('/', [CheckoutController::class, 'index'])->name('checkout.index');
         Route::post('/process', [CheckoutController::class, 'process'])->name('checkout.process');
@@ -56,6 +56,7 @@ Route::group([], function () {
         Route::post('/api/validate-promo', [CheckoutController::class, 'validatePromo']);
     });
     
+    // Rute Dashboard Pelanggan
     Route::middleware('auth:web')->group(function () {
         Route::get('/dashboard', [CustomerDashboardController::class, 'index'])->name('user.dashboard');
         Route::get('/profile', [ProfileController::class, 'show'])->name('user.profile');
