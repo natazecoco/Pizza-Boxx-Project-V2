@@ -28,10 +28,9 @@ use Filament\Forms\Components\MarkdownEditor; // Alternatif Rich Editor jika leb
 class ProductResource extends Resource
 {
     protected static ?string $model = Product::class;
-
-    // ICON INI YANG MENYEBABKAN ERROR SVG NOT FOUND SEBELUMNYA
+    protected static ?string $navigationGroup = 'Katalog Produk';
     // Kita akan gunakan ikon yang pasti ada, misal 'heroicon-o-archive-box'
-    protected static ?string $navigationIcon = 'heroicon-o-archive-box'; // GANTI INI DENGAN IKON YANG ADA
+    protected static ?string $navigationIcon = 'heroicon-o-archive-box';
 
     public static function form(Form $form): Form
     {

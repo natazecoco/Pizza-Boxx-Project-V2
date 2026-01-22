@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Set;
+use Filament\Forms\Get;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Support\Collection;
 use Filament\Tables\Filters\SelectFilter; 
@@ -19,8 +21,29 @@ use Filament\Tables\Filters\SelectFilter;
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
+    protected static ?string $navigationGroup = 'Manajemen Pengguna';
     protected static ?string $navigationIcon = 'heroicon-o-users';
 
+    // Kustomisasi query Eloquent untuk menyesuaikan visibilitas data
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth('employee')->user();
+
+        // Safety check: Pastikan user ada
+        if (!$user) return $query;
+
+        if ($user->isBranchManager()) {
+            // Manager hanya lihat user di lokasinya sendiri
+            // Dan biasanya tidak boleh lihat Super Admin
+            return $query->where('location_id', $user->location_id)
+                        ->where('role', '!=', 'super_admin');
+        }
+
+        return $query;
+    }    
+
+    // Formulir untuk membuat dan mengedit pengguna
     public static function form(Form $form): Form
     {
         return $form
@@ -47,17 +70,52 @@ class UserResource extends Resource
                     ->placeholder('Pilih Cabang')
                     ->searchable()
                     ->preload()
+                    ->required(fn (Get $get) => $get('role') !== 'super_admin')
+                    ->default(fn () => auth('employee')->user()->location_id)
+                    // Kunci field jika yang login adalah Manager Cabang
+                    ->disabled(fn () => auth('employee')->user()->isBranchManager())
+                    ->dehydrated()
                     ->nullable(), // Izinkan kosong jika user adalah Admin Pusat
+                Select::make('role') // Kita arahkan ke kolom 'role' di database
+                    ->options(function () {
+                        $user = auth('employee')->user();
+                        if ($user->isSuperAdmin()) {
+                            return [
+                                'super_admin' => 'Super Admin',
+                                'branch_manager' => 'Branch Manager',
+                                'employee' => 'Employee',
+                                'customer' => 'Customer',
+                            ];
+                        }
+                        // Manager Cabang tidak boleh bikin Super Admin baru
+                        return [
+                            'employee' => 'Employee',
+                            'customer' => 'Customer',
+                        ];
+                    })
+                    ->required()
+                    ->native(false)
+                    ->label('Peran')
+                    ->placeholder('Pilih Peran')
+                    ->live()
+                    ->afterStateUpdated(function (Set $set, $state) {
+                        // Ini triknya: Saat role dipilih, kita siapkan data 
+                        // untuk sinkronisasi Spatie nantinya
+                        $set('roles', [$state]); 
+                }),
                 Select::make('roles')
                     ->relationship('roles', 'name')
                     // ->multiple()
                     ->placeholder('Pilih Peran')
+                    ->hidden() // Sembunyikan field ini
                     ->preload()
-                    ->required()
-                    ->label('Peran'),
+                    ->required(false)
+                    ->label('Peran')
+                    ->dehydrated(true),
             ]);
     }
 
+    // Tabel untuk menampilkan daftar pengguna
     public static function table(Table $table): Table
     {
         return $table
@@ -100,10 +158,14 @@ class UserResource extends Resource
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make()
                     ->hidden(function (User $record): bool {
-                        // Perbaikan: Menentukan guard 'employee'
-                        if ($record->hasRole('admin', 'employee')) {
-                            return User::role('admin', 'employee')->count() <= 1;
-                        }
+                        $user = auth('employee')->user();
+                        
+                        // Tidak bisa hapus diri sendiri
+                        if ($record->id === $user->id) return true;
+                        
+                        // Manager Cabang tidak bisa hapus akun dengan role tertentu jika perlu
+                        if ($user->isBranchManager() && $record->isSuperAdmin()) return true;
+
                         return false;
                     }),
             ])
@@ -115,13 +177,14 @@ class UserResource extends Resource
                                 return false;
                             }
                             // Perbaikan: Menentukan guard 'employee'
-                            $adminRoles = $records->filter(fn (User $user) => $user->hasRole('admin', 'employee'));
-                            return $adminRoles->count() > 0 && User::role('admin', 'employee')->count() <= $adminRoles->count();
+                            $adminRoles = $records->filter(fn (User $user) => $user->isSuperAdmin());
+                            return $adminRoles->count() > 0 && User::where('role', 'super_admin')->count() <= $adminRoles->count();
                         }),
                 ]),
             ]);
     }
 
+    // Relasi (jika ada)
     public static function getRelations(): array
     {
         return [
@@ -129,6 +192,7 @@ class UserResource extends Resource
         ];
     }
 
+    // Halaman untuk resource ini
     public static function getPages(): array
     {
         return [

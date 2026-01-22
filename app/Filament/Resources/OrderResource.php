@@ -14,7 +14,6 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
@@ -26,13 +25,38 @@ use Filament\Forms\Components\Wizard\Step;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
+use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Filters\SelectFilter;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 
 class OrderResource extends Resource
 {
     protected static ?string $model = Order::class;
+    protected static ?string $navigationGroup = 'Manajemen Penjualan';
     protected static ?string $navigationIcon = 'heroicon-o-shopping-bag';
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth('employee')->user();
+
+        // Gunakan fungsi Cara B yang kita buat di Model User
+        if ($user->isBranchManager()) {
+            return $query->where('location_id', $user->location_id);
+        }
+
+        // Jika Super Admin, biarkan melihat semua data
+        return $query;
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        $user = auth('employee')->user();
+        // Super Admin dan Branch Manager boleh lihat menu ini
+        return $user?->isSuperAdmin() || $user?->isBranchManager() || false;
+    }
 
     // *** Metode ini akan mengelola perhitungan total secara terpusat ***
     public static function updateTotals(Get $get, Set $set): void
@@ -110,7 +134,10 @@ class OrderResource extends Resource
                                         ->relationship('location', 'name')
                                         ->required()
                                         ->label('Lokasi Toko')
-                                        ->live(),
+                                        ->live()
+                                        ->default(fn () => auth('employee')->user()?->location_id) // Default ke lokasi si admin
+                                        ->disabled(fn () => auth('employee')->user()?->isBranchManager()) // Kunci jika dia Manager Cabang
+                                        ->dehydrated(), // Tetap kirim datanya ke database meskipun field-nya di-disable
                                 ]),
                             Forms\Components\Grid::make(2)
                                 ->schema([
@@ -295,7 +322,12 @@ class OrderResource extends Resource
                 TextColumn::make('total_amount')
                     ->money('IDR')
                     ->sortable()
-                    ->label('Total'),
+                    ->label('Total')
+                    ->summarize(
+                        Sum::make()
+                            ->label('Total Omzet')
+                            ->money('IDR')
+                    ),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -328,7 +360,8 @@ class OrderResource extends Resource
                     ->label('Filter Tipe'),
                 SelectFilter::make('location_id')
                     ->relationship('location', 'name')
-                    ->label('Filter Lokasi'),
+                    ->label('Filter Lokasi')
+                    ->hidden(fn () => auth('employee')->user()?->isBranchManager() ?? false),
                 SelectFilter::make('delivery_employee_id')
                     ->relationship('deliveryEmployee', 'name', fn (Builder $query) => $query->where('role', 'employee'))
                     ->label('Filter Pegawai'),

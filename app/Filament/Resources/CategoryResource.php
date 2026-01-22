@@ -18,8 +18,14 @@ use Filament\Tables\Columns\TextColumn; // Import komponen TextColumn
 class CategoryResource extends Resource
 {
     protected static ?string $model = Category::class;
-
+        protected static ?string $navigationGroup = 'Katalog Produk';
     protected static ?string $navigationIcon = 'heroicon-o-tag'; // Contoh ikon untuk kategori
+
+    // Kontrol akses: Hanya Super Admin yang bisa mengakses resource ini
+    public static function canAccess(): bool
+    {
+        return auth('employee')->user()?->isSuperAdmin() ?? false;
+    }
 
     public static function form(Form $form): Form
     {

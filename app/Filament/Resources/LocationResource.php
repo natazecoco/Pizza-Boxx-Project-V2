@@ -20,7 +20,15 @@ class LocationResource extends Resource
 {
     protected static ?string $model = Location::class;
 
+    protected static ?string $navigationGroup = 'Manajemen Lokasi';
+
     protected static ?string $navigationIcon = 'heroicon-o-building-storefront'; // Contoh ikon
+
+    // Kontrol akses: Hanya Super Admin yang bisa mengakses resource ini
+    public static function canAccess(): bool
+    {
+        return auth('employee')->user()?->isSuperAdmin() ?? false;
+    }
 
     public static function form(Form $form): Form
     {

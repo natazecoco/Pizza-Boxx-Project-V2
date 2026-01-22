@@ -21,4 +21,20 @@ class EditUser extends EditRecord
     {
         return $this->getResource()::getUrl('index');
     }
+
+    protected function afterSave(): void
+    {
+        $user = $this->record;
+
+        // Tentukan pintu berdasarkan role-nya
+        $guard = ($user->role === 'customer') ? 'web' : 'employee';
+
+        $role = \Spatie\Permission\Models\Role::where('name', $user->role)
+            ->where('guard_name', $guard)
+            ->first();
+
+        if ($role) {
+            $user->syncRoles([$role]);
+        }
+    }
 }

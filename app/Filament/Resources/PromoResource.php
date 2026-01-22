@@ -27,8 +27,16 @@ class PromoResource extends Resource
 {
     protected static ?string $model = Promo::class;
 
+    protected static ?string $navigationGroup = 'Pemasaran';
     protected static ?string $navigationIcon = 'heroicon-o-gift'; // Contoh ikon untuk promo
 
+    // Kontrol akses: Hanya Super Admin yang bisa mengakses resource ini
+    public static function canAccess(): bool
+    {
+        return auth('employee')->user()?->isSuperAdmin() ?? false;
+    }
+
+    // Formulir untuk membuat dan mengedit promo
     public static function form(Form $form): Form
     {
         return $form

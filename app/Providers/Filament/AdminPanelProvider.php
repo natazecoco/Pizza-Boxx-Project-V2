@@ -4,7 +4,6 @@ namespace App\Providers\Filament;
 
 use App\Filament\Widgets\OrderStats;
 use App\Filament\Widgets\OrderPerLocationStats;
-use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Pages;
@@ -21,15 +20,15 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\HtmlString;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
-// Import Models
-use App\Models\User;
-use App\Models\Category;
-use App\Models\Location;
-use App\Models\Product;
-use App\Models\ProductOption;
-use App\Models\ProductAddon;
-use App\Models\Promo;
-use App\Models\Order;
+// 🔽 IMPORT RESOURCE (INI YANG PENTING)
+use App\Filament\Resources\UserResource;
+use App\Filament\Resources\CategoryResource;
+use App\Filament\Resources\LocationResource;
+use App\Filament\Resources\ProductResource;
+use App\Filament\Resources\ProductOptionResource;
+use App\Filament\Resources\ProductAddonResource;
+use App\Filament\Resources\PromoResource;
+use App\Filament\Resources\OrderResource;
 
 // Filament Navigation
 use Filament\Navigation\NavigationGroup;
@@ -44,56 +43,36 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
-            
-            //Logo di Tab Browser
+            ->authGuard('employee')
+
             ->favicon(asset('images/pizza-boxx-logo.png'))
 
-            // Sidebar
-            // Tambahkan atau sesuaikan pengaturan sidebar
-            ->sidebarWidth('16rem') // Misalnya, 18rem. Default biasanya 16rem.
-            // ->collapsedSidebarWidth('36rem') // Misalnya, 5rem. Default biasanya 4rem.
+            ->sidebarWidth('16rem')
+            ->brandLogoHeight('4rem')
 
-            // Logo Universal (semua halaman)
-                
-            // ->brandLogo(asset('images/pizza-boxx-logo.png'))
-            
-            // atau
-
-            // Opsi Brand Logo dengan teks
-            // ->brandLogo(fn () => new HtmlString(
-            //     '<div class="flex items-center justify-center gap-4">
-            //         <img src="' . asset('images/pizza-boxx-logo.png') . '" alt="Pizza Boxx Logo" class="h-10 w-10" />
-            //         <span class="font-bold text-lg">Pizza Boxx Admin Panel</span>
-            //     </div>'
-            // ))
-
-            // Opsi Brand Logo Height
-            ->brandLogoHeight('4rem') // Opsi Brand Logo Height
-
-            // Logo dipisahkan antara halaman login dan halaman lainnya
             ->brandLogo(fn () => new HtmlString(
                 '<div class="flex items-center justify-center gap-4">
                     <img src="' . asset('images/pizza-boxx-logo.png') . '" 
-                    alt="Pizza Boxx Logo" 
-                    class="' . (request()->routeIs('filament.admin.auth.login') ? 'h-16 w-16' : 'h-10 w-10') . '" />
+                        alt="Pizza Boxx Logo" 
+                        class="' . (request()->routeIs('filament.admin.auth.login') ? 'h-16 w-16' : 'h-10 w-10') . '" />
                     ' . (!request()->routeIs('filament.admin.auth.login') ? 
-                    '<span class="font-bold text-lg">Admin Panel</span>' : '') . '
+                        '<span class="font-bold text-lg">Admin Panel</span>' : '') . '
                 </div>'
             ))
 
-            // ->brandName('Pizza Boxx Admin') //Opsi Brand Name
-
             ->brandName(fn () => new HtmlString(
-            '<div class="flex flex-col items-center justify-center gap-16">
-                <img src="' . asset('images/pizza-boxx-logo.png') . '" alt="Pizza Boxx Logo" class="h-10 w-10" />
-                <span class="font-bold text-lg">Pizza Boxx</span>
-            </div>'
-            )) // Opsi Brand Name
+                '<div class="flex flex-col items-center justify-center gap-16">
+                    <img src="' . asset('images/pizza-boxx-logo.png') . '" class="h-10 w-10" />
+                    <span class="font-bold text-lg">Pizza Boxx</span>
+                </div>'
+            ))
+
             ->colors([
                 'primary' => Color::Red,
-                'secondary' => Color::hex('#FFC107'), // kuning keju
+                'secondary' => Color::hex('#FFC107'),
             ])
-            ->sidebarCollapsibleOnDesktop() // sidebar bisa collapse
+
+            ->sidebarCollapsibleOnDesktop()
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
@@ -106,6 +85,7 @@ class AdminPanelProvider extends PanelProvider
                 OrderStats::class,
                 OrderPerLocationStats::class,
             ])
+
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
@@ -117,66 +97,57 @@ class AdminPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])
-            // ->authMiddleware([
-            //     Authenticate::class,
-            // ])
 
-            // Perbaikan ada di sini:
-            ->authGuard('employee')
+            // ->navigationGroups(array_filter([
+            //     (auth('employee')->check() && auth('employee')->user()->isSuperAdmin())
+            //         ? NavigationGroup::make('Manajemen Pusat')->items([
+            //             NavigationItem::make('Dashboard')
+            //                 ->url(fn () => route('filament.admin.pages.dashboard'))
+            //                 ->icon('heroicon-o-home'),
 
-            ->navigationGroups(array_filter([
-                (auth()->check() && auth()->user()->hasRole('admin')) ? NavigationGroup::make('Manajemen Pusat')->items([
-                    NavigationItem::make('Dashboard')
-                        ->url(fn (): string => route('filament.admin.pages.dashboard'))
-                        ->icon('heroicon-o-home')
-                        ->activeIcon('heroicon-s-home')
-                        ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.dashboard')),
-                    NavigationItem::make('Users')
-                        ->url(fn (): string => User::getUrl())
-                        ->icon('heroicon-o-users')
-                        ->activeIcon('heroicon-s-users')
-                        ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.users.index')),
-                    NavigationItem::make('Categories')
-                        ->url(fn (): string => Category::getUrl())
-                        ->icon('heroicon-o-tag')
-                        ->activeIcon('heroicon-s-tag')
-                        ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.categories.index')),
-                    NavigationItem::make('Locations')
-                        ->url(fn (): string => Location::getUrl())
-                        ->icon('heroicon-o-building-storefront')
-                        ->activeIcon('heroicon-s-building-storefront')
-                        ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.locations.index')),
-                    NavigationItem::make('Products')
-                        ->url(fn (): string => Product::getUrl())
-                        ->icon('heroicon-o-archive-box')
-                        ->activeIcon('heroicon-s-archive-box')
-                        ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.products.index')),
-                    NavigationItem::make('Product Options')
-                        ->url(fn (): string => ProductOption::getUrl())
-                        ->icon('heroicon-o-adjustments-vertical')
-                        ->activeIcon('heroicon-s-adjustments-vertical')
-                        ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.product-options.index')),
-                    NavigationItem::make('Product Addons')
-                        ->url(fn (): string => ProductAddon::getUrl())
-                        ->icon('heroicon-o-plus-circle')
-                        ->activeIcon('heroicon-s-plus-circle')
-                        ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.product-addons.index')),
-                    NavigationItem::make('Promos')
-                        ->url(fn (): string => Promo::getUrl())
-                        ->icon('heroicon-o-gift')
-                        ->activeIcon('heroicon-s-gift')
-                        ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.promos.index')),
-                ]) : null,
-                (auth()->check() && auth()->user()->hasAnyRole(['admin', 'employee'])) ? NavigationGroup::make('Manajemen Pesanan')->items([
-                    NavigationItem::make('Orders')
-                        ->url(fn (): string => Order::getUrl())
-                        ->icon('heroicon-o-shopping-bag')
-                        ->activeIcon('heroicon-s-shopping-bag')
-                        ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.orders.index')),
-                ]) : null,
-                (auth()->check() && auth()->user()->hasRole('employee')) ? NavigationGroup::make('Manajemen Cabang')->items([
-                    // Tambahkan menu cabang di sini jika ada nanti
-                ]) : null,
-            ]));
+            //             NavigationItem::make('Users')
+            //                 ->url(fn () => UserResource::getUrl())
+            //                 ->icon('heroicon-o-users'),
+
+            //             NavigationItem::make('Categories')
+            //                 ->url(fn () => CategoryResource::getUrl())
+            //                 ->icon('heroicon-o-tag'),
+
+            //             NavigationItem::make('Locations')
+            //                 ->url(fn () => LocationResource::getUrl())
+            //                 ->icon('heroicon-o-building-storefront'),
+
+            //             NavigationItem::make('Products')
+            //                 ->url(fn () => ProductResource::getUrl())
+            //                 ->icon('heroicon-o-archive-box'),
+
+            //             NavigationItem::make('Product Options')
+            //                 ->url(fn () => ProductOptionResource::getUrl())
+            //                 ->icon('heroicon-o-adjustments-vertical'),
+
+            //             NavigationItem::make('Product Addons')
+            //                 ->url(fn () => ProductAddonResource::getUrl())
+            //                 ->icon('heroicon-o-plus-circle'),
+
+            //             NavigationItem::make('Promos')
+            //                 ->url(fn () => PromoResource::getUrl())
+            //                 ->icon('heroicon-o-gift'),
+            //         ])
+            //         : null,
+
+            //     (auth('employee')->check() && auth('employee')->user()->isSuperAdmin())
+            //         ? NavigationGroup::make('Manajemen Pesanan')->items([
+            //             NavigationItem::make('Orders')
+            //                 ->url(fn () => OrderResource::getUrl())
+            //                 ->icon('heroicon-o-shopping-bag'),
+            //         ])
+            //         : null,
+            // ]));
+
+            ->navigationGroups([
+                'Manajemen Pusat',
+                'Manajemen Pesanan',
+                'Manajemen Cabang',
+            ]);
     }
 }

@@ -19,11 +19,12 @@ public function run(): void
 
         // 2. Buat user pegawai
         $user = User::firstOrCreate(
-            ['email' => 'test_pegawai@gmail.com'],
+            ['email' => 'test_sukahati@gmail.com'],
             [
-                'name' => 'Pegawai',
+                'name' => 'Test Pegawai Sukahati',
                 'password' => Hash::make('12345678'),
                 'role' => 'employee', // Label untuk kolom tabel users
+                'location_id' => 1,
             ]
         );
 

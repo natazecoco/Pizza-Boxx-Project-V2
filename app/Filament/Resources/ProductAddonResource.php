@@ -24,8 +24,13 @@ use Filament\Tables\Columns\ToggleColumn;
 class ProductAddonResource extends Resource
 {
     protected static ?string $model = ProductAddon::class;
-
+    protected static ?string $navigationGroup = 'Katalog Produk';
     protected static ?string $navigationIcon = 'heroicon-o-plus-circle'; // Contoh ikon untuk addon
+
+    public static function canAccess(): bool
+    {
+        return auth('employee')->user()?->isSuperAdmin() ?? false;
+    }
 
     public static function form(Form $form): Form
     {

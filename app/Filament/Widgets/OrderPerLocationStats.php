@@ -9,6 +9,13 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class OrderPerLocationStats extends BaseWidget
 {
+    // Hanya Super Admin yang boleh lihat widget ini
+    public static function canView(): bool
+    {
+        return auth('employee')->user()?->isSuperAdmin() ?? false;
+    }
+
+    // Interval polling untuk memperbarui data setiap 15 detik
     protected function getStats(): array
     {
         $stats = [];

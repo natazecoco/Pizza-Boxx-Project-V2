@@ -22,9 +22,14 @@ use Filament\Tables\Columns\TextColumn;
 class ProductOptionResource extends Resource
 {
     protected static ?string $model = ProductOption::class;
-
+    protected static ?string $navigationGroup = 'Katalog Produk';
     protected static ?string $navigationIcon = 'heroicon-o-adjustments-vertical'; // Contoh ikon untuk opsi produk
 
+    public static function canAccess(): bool
+    {
+        return auth('employee')->user()?->isSuperAdmin() ?? false;
+    }
+    
     public static function form(Form $form): Form
     {
         return $form

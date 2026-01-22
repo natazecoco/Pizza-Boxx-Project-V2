@@ -15,6 +15,12 @@ class User extends Authenticatable implements FilamentUser
 {
     use HasApiTokens, HasFactory, Notifiable, HasRoles;
 
+    // Memberitahu Spatie bahwa Model ini bisa punya role dari berbagai pintu
+    public function guardName(): array
+    {
+        return ['web', 'employee'];
+    }
+
     /**
      * The attributes that are mass assignable.
      *
@@ -48,14 +54,47 @@ class User extends Authenticatable implements FilamentUser
         'password' => 'hashed',
     ];
 
+    // =========================================================
+    // 1. HELPER ROLE (Cara B)
+    // =========================================================
+
+    /**
+     * Cek apakah user adalah Super Admin (Pusat)
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === 'super_admin';
+    }
+
+    /**
+     * Cek apakah user adalah Admin Cabang (Manager)
+     */
+    public function isBranchManager(): bool
+    {
+        return $this->role === 'branch_manager';
+    }
+
+    // =========================================================
+    // 2. AKSES FILAMENT
+    // =========================================================
+
     /**
      * Filament User Access Control
      * Only users with 'admin' or 'employee' role can access Filament panels.
      */
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->hasAnyRole(['admin']);
+        return $this->isSuperAdmin() || $this->isBranchManager();
     }
+
+    public function canManageOrders(): bool
+    {
+        return $this->isSuperAdmin() || $this->isBranchManager();
+    }
+
+    // =========================================================
+    // 3. RELASI
+    // =========================================================
 
     /**
      * Relationship: A user (employee) belongs to one location.
