@@ -1,0 +1,107 @@
+@extends('layouts.customer')
+
+@section('content')
+
+    {{-- 1. SINEMATIK SPLIT HERO (FIXED BADGE) --}}
+    <section class="relative min-h-screen flex flex-col lg:flex-row bg-white overflow-hidden">
+        
+        {{-- Sisi Kiri: Branding (Hapus overflow-hidden di sini agar badge bisa melayang) --}}
+        <div class="w-full lg:w-1/2 bg-brand-red flex flex-col justify-center p-10 lg:p-24 relative order-2 lg:order-1">
+            
+            {{-- DNA: Pizza Pattern (Pindahkan overflow-hidden ke sini) --}}
+            <div class="absolute inset-0 bg-pizza-pattern opacity-10 overflow-hidden"></div>
+            
+            <div class="relative z-20 animate-fade-in-down">
+                <div class="inline-block mb-6 px-4 py-1 bg-white/10 backdrop-blur-md border border-white/20 rounded-full">
+                    <span class="text-[10px] font-black text-brand-kraft uppercase tracking-widest">Premium Takeaway</span>
+                </div>
+                
+                <h1 class="text-6xl md:text-8xl lg:text-9xl font-black text-white italic tracking-tighter leading-[0.85] mb-8">
+                    PIZZA<br><span class="text-brand-kraft drop-shadow-2xl">BOXX</span>
+                </h1>
+                
+                <p class="text-lg lg:text-xl font-bold text-white/80 mb-12 uppercase tracking-[0.3em] leading-relaxed">
+                    Good Pizza, <span class="bg-brand-kraft text-brand-red px-2">Great Pizza.</span>
+                </p>
+
+                <div class="flex flex-wrap gap-6">
+                    <a href="{{ route('menu.index') }}" class="group bg-white text-brand-red font-black py-4 px-10 rounded-2xl shadow-2xl hover:bg-brand-kraft hover:scale-105 transition-all uppercase text-xs tracking-widest">
+                        Pesan Sekarang
+                    </a>
+                </div>
+            </div>
+
+            {{-- Floating Badge: Sekarang sudah aman tidak terpotong --}}
+            {{-- Gunakan z-40 agar berada di atas segalanya --}}
+            <div class="hidden lg:flex absolute -right-12 top-1/2 -translate-y-1/2 z-40 w-24 h-24 bg-brand-kraft rounded-full shadow-2xl items-center justify-center rotate-12 border-4 border-brand-red animate-bounce">
+                <p class="text-brand-red font-black text-center leading-tight text-[10px] uppercase">Freshly<br>Baked</p>
+            </div>
+        </div>
+
+        {{-- Sisi Kanan: Visual Produk --}}
+        <div class="w-full lg:w-1/2 h-[450px] lg:h-auto relative overflow-hidden order-1 lg:order-2">
+            <img src="{{ asset('images/pizzabanner.jpg') }}" class="w-full h-full object-cover scale-110 lg:scale-100 transition-transform duration-1000">
+            
+            <div class="absolute inset-0 bg-gradient-to-r from-brand-red via-transparent to-transparent lg:block hidden"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-brand-red via-transparent to-transparent lg:hidden"></div>
+            
+            <div class="absolute bottom-10 right-10 text-right hidden lg:block">
+                <p class="text-white/40 text-[10px] font-black uppercase tracking-[0.5em] rotate-90 origin-right">Pizza Boxx Studio • 2026</p>
+            </div>
+        </div>
+    </section>
+
+    {{-- 2. NARRATIVE FEATURES: Seragamkan Huruf Kapital --}}
+    <section class="py-24 bg-white relative overflow-hidden">
+        <div class="container mx-auto px-6 lg:px-12">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-16 items-start">
+                
+                <div class="text-center lg:text-left animate-fade-in">
+                    <div class="w-14 h-14 bg-brand-red text-white rounded-2xl flex items-center justify-center mb-8 mx-auto lg:mx-0 shadow-lg">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <h3 class="text-3xl font-black text-gray-900 uppercase italic mb-4">Kilat</h3>
+                    <p class="text-gray-400 font-black uppercase text-[10px] tracking-widest leading-relaxed">
+                        Piza tetap panas sampai di pintu Anda dengan sistem pengantaran khusus.
+                    </p>
+                </div>
+
+                <div class="text-center lg:text-left animate-fade-in" style="animation-delay: 0.2s">
+                    <div class="w-14 h-14 bg-brand-red text-white rounded-2xl flex items-center justify-center mb-8 mx-auto lg:mx-0 shadow-lg">
+                        <i class="fas fa-cheese"></i>
+                    </div>
+                    <h3 class="text-3xl font-black text-gray-900 uppercase italic mb-4">Premium</h3>
+                    <p class="text-gray-400 font-black uppercase text-[10px] tracking-widest leading-relaxed">
+                        Hanya menggunakan bahan baku pilihan, keju mozzarella asli, dan tomat segar.
+                    </p>
+                </div>
+
+                <div class="text-center lg:text-left animate-fade-in" style="animation-delay: 0.4s">
+                    <div class="w-14 h-14 bg-brand-red text-white rounded-2xl flex items-center justify-center mb-8 mx-auto lg:mx-0 shadow-lg">
+                        <i class="fas fa-certificate"></i>
+                    </div>
+                    <h3 class="text-3xl font-black text-gray-900 uppercase italic mb-4">Halal</h3>
+                    <p class="text-gray-400 font-black uppercase text-[10px] tracking-widest leading-relaxed">
+                        100% Tersertifikasi Halal untuk kenyamanan santap keluarga Anda.
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    {{-- 3. MINIMALIST FINAL CTA --}}
+    <section class="py-24 bg-slate-50 relative overflow-hidden border-t border-gray-100">
+        <div class="absolute inset-0 bg-pizza-pattern opacity-[0.03]"></div>
+        <div class="container mx-auto px-6 relative z-10 text-center">
+            <h2 class="text-5xl lg:text-7xl font-black text-gray-900 mb-10 uppercase italic tracking-tighter leading-none">
+                READY TO <br> <span class="text-brand-red">ORDER?</span>
+            </h2>
+            <a href="{{ route('menu.index') }}" class="inline-flex items-center justify-center gap-3 bg-brand-red hover:bg-red-700 text-white font-black py-4 px-12 rounded-2xl text-xs uppercase tracking-[0.2em] shadow-xl hover:scale-105 active:scale-95 whitespace-nowrap transition-all">
+                <span>See Our Full Menu</span>
+                <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+    </section>
+
+@endsection

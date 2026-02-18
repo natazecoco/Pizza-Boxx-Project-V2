@@ -1,133 +1,114 @@
 @extends('layouts.customer')
 
+@section('title', 'Pesanan Saya')
+
 @section('content')
-<div class="container mx-auto py-8 px-4 sm:px-6 lg:px-8 max-w-7xl">
-    <div class="mb-10 text-center">
-        <h1 class="text-3xl md:text-4xl font-bold text-red-600 mb-2">Dashboard Pelanggan</h1>
-        <p class="text-gray-600 max-w-2xl mx-auto">Riwayat lengkap semua pesanan Anda di Pizza Boxx</p>
-    </div>
-
-    <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
-        <div class="bg-gradient-to-r from-red-600 to-orange-500 px-6 py-4">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
-                <h2 class="text-xl font-semibold text-white">Riwayat Pesanan</h2>
-                <div class="mt-2 md:mt-0">
-                    <span class="inline-block bg-white/20 text-white px-3 py-1 rounded-full text-sm font-medium">
-                        Total Pesanan: {{ $orders->count() }}
-                    </span>
-                </div>
+{{-- --- 1. HERO SECTION --- --}}
+<section class="bg-brand-red pt-32 pb-24 relative overflow-hidden rounded-b-[3rem] shadow-xl z-10">
+    <div class="absolute inset-0 bg-pizza-pattern opacity-10"></div>
+    
+    <div class="container mx-auto px-6 lg:px-12 relative z-10 text-center">
+        <span class="text-brand-kraft font-black text-[10px] uppercase tracking-widest mb-2 block animate-fade-in-down">Order History</span>
+        <h1 class="text-5xl md:text-7xl font-black text-white italic uppercase tracking-tighter leading-none mb-8">
+            PESANAN <span class="text-brand-kraft">SAYA</span>
+        </h1>
+        
+        {{-- Stats Bento --}}
+        <div class="inline-flex flex-wrap justify-center gap-4">
+            <div class="bg-gray-900 text-white px-6 py-3 rounded-2xl border-2 border-transparent shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)]">
+                <p class="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-1">Total Order</p>
+                <p class="text-xl font-black leading-none">{{ $orders->count() }}</p>
+            </div>
+            <div class="bg-white text-gray-900 px-6 py-3 rounded-2xl border-2 border-transparent shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)]">
+                <p class="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-1">Sedang Aktif</p>
+                <p class="text-xl font-black text-brand-red leading-none">{{ $orders->whereIn('status', ['pending', 'dapur', 'on_delivery'])->count() }}</p>
             </div>
         </div>
+    </div>
+</section>
 
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Tanggal</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Kode Pesanan</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Total</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Status</th>
-                        {{-- Mengganti kolom 'QR Code' menjadi 'PIN' --}}
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">PIN</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-100">
-                    @forelse($orders as $order)
-                    <tr class="hover:bg-red-50 transition-colors duration-150">
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900">{{ $order->created_at->format('d M Y') }}</div>
-                            <div class="text-xs text-gray-500">{{ $order->created_at->format('H:i') }}</div>
-                        </td>
+{{-- --- 2. CONTENT LIST --- --}}
+<section class="bg-slate-50 min-h-screen pb-24 pt-12">
+    <div class="container mx-auto px-4 lg:px-8 max-w-4xl">
+        
+        <div class="space-y-6">
+            @forelse($orders as $order)
+                @php
+                    $statusColors = [
+                        'pending'     => ['bg' => 'bg-yellow-100', 'border' => 'border-yellow-200', 'text' => 'text-yellow-700', 'icon' => 'fa-clock'],
+                        'dapur'       => ['bg' => 'bg-orange-100', 'border' => 'border-orange-200', 'text' => 'text-orange-700', 'icon' => 'fa-fire'],
+                        'on_delivery' => ['bg' => 'bg-blue-100',   'border' => 'border-blue-200',   'text' => 'text-blue-700',   'icon' => 'fa-motorcycle'],
+                        'delivered'   => ['bg' => 'bg-green-100',  'border' => 'border-green-200',  'text' => 'text-green-700',  'icon' => 'fa-check-circle'],
+                        'completed'   => ['bg' => 'bg-gray-100',   'border' => 'border-gray-200',   'text' => 'text-gray-700',   'icon' => 'fa-flag-checkered'],
+                        'cancelled'   => ['bg' => 'bg-red-100',    'border' => 'border-red-200',    'text' => 'text-red-700',    'icon' => 'fa-times-circle'],
+                    ];
+                    $s = strtolower($order->status);
+                    $conf = $statusColors[$s] ?? ['bg' => 'bg-gray-100', 'border' => 'border-gray-200', 'text' => 'text-gray-500', 'icon' => 'fa-circle'];
+                @endphp
 
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-md font-mono text-sm">
-                                {{ $order->order_code ?? $order->id }}
-                            </span>
-                        </td>
+                {{-- CARD PESANAN (Neo-Brutalism Style) --}}
+                <div class="group bg-white rounded-[2.5rem] p-6 lg:p-8 border-2 border-transparent hover:border-gray-900 shadow-sm hover:shadow-[6px_6px_0px_0px_rgba(220,38,38,1)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
+                    
+                    {{-- Decoration bg on hover --}}
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-gray-50 rounded-bl-[5rem] -z-0 transition-colors group-hover:bg-red-50"></div>
 
-                        <td class="px-6 py-4 whitespace-nowrap text-base font-bold text-red-600">
-                            Rp {{ number_format($order->total ?? $order->total_amount, 0, ',', '.') }}
-                        </td>
-
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            @php
-                                $statusColors = [
-                                    'pending' => ['bg' => 'bg-yellow-100', 'text' => 'text-yellow-800', 'icon' => 'fa-clock'],
-                                    'on_delivery' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'icon' => 'fa-truck'],
-                                    'delivered' => ['bg' => 'bg-green-100', 'text' => 'text-green-800', 'icon' => 'fa-check-circle'],
-                                    'completed' => ['bg' => 'bg-green-100', 'text' => 'text-green-800', 'icon' => 'fa-check-circle'],
-                                    'failed' => ['bg' => 'bg-red-100', 'text' => 'text-red-800', 'icon' => 'fa-times-circle'],
-                                    'cancelled' => ['bg' => 'bg-red-100', 'text' => 'text-red-800', 'icon' => 'fa-ban'],
-                                ];
-                                $status = strtolower($order->status);
-                                $statusConfig = $statusColors[$status] ?? ['bg' => 'bg-gray-100', 'text' => 'text-gray-800', 'icon' => 'fa-question-circle'];
-                            @endphp
-                            <span class="px-3 py-1 rounded-full text-xs font-semibold {{ $statusConfig['bg'] }} {{ $statusConfig['text'] }} inline-flex items-center">
-                                <i class="fas {{ $statusConfig['icon'] }} mr-1"></i>
-                                {{ ucfirst($order->status) }}
-                            </span>
-                        </td>
-
-                        {{-- Menampilkan PIN jika ada --}}
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            @if(($order->order_type === 'takeaway' || $order->order_type === 'pickup') && $order->pin)
-                                <span class="inline-block px-3 py-1.5 text-lg font-bold text-white bg-red-600 rounded-md shadow-sm">
-                                    {{ $order->pin }}
-                                </span>
-                            @else
-                                <span class="text-gray-400 text-sm">-</span>
-                            @endif
-                        </td>
-
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <a href="{{ route('user.order.show', $order->id) }}" 
-                                class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full shadow-sm text-white bg-orange-600 hover:bg-orange-700 transition-all">
-                                <i class="fas fa-truck mr-1"></i> Lacak Pesanan
-                            </a>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="6" class="px-6 py-12 text-center">
-                            <div class="flex flex-col items-center justify-center text-gray-400">
-                                <i class="fas fa-shopping-bag text-4xl mb-3"></i>
-                                <p class="text-lg">Belum ada pesanan</p>
-                                <a href="{{ route('menu.index') }}" class="mt-4 inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700 active:bg-red-900 focus:outline-none focus:border-red-900 focus:ring ring-red-300 disabled:opacity-25 transition ease-in-out duration-150">
-                                    <i class="fas fa-utensils mr-2"></i> Pesan Sekarang
-                                </a>
+                    <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        
+                        {{-- Bagian Kiri: Identitas --}}
+                        <div class="flex items-center gap-5">
+                            <div class="w-16 h-16 rounded-2xl bg-slate-50 border-2 border-gray-100 text-gray-300 group-hover:border-brand-red group-hover:bg-brand-red group-hover:text-white flex items-center justify-center transition-all duration-300">
+                                <i class="fas fa-pizza-slice text-2xl"></i>
                             </div>
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                            <div>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <h3 class="text-xl font-black text-gray-900 italic uppercase tracking-tighter leading-none">#{{ $order->order_code ?? $order->id }}</h3>
+                                    {{-- Status Badge --}}
+                                    <span class="{{ $conf['bg'] }} {{ $conf['text'] }} border {{ $conf['border'] }} px-2.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5">
+                                        <i class="fas {{ $conf['icon'] }}"></i> {{ $order->status }}
+                                    </span>
+                                </div>
+                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                    {{ $order->created_at->format('d M Y') }} • {{ $order->created_at->format('H:i') }} WIB
+                                </p>
+                            </div>
+                        </div>
+
+                        {{-- Bagian Kanan: Harga & Tombol --}}
+                        <div class="flex flex-row md:flex-col items-center md:items-end justify-between gap-2 md:gap-4 border-t md:border-t-0 pt-4 md:pt-0 border-dashed border-gray-100">
+                            <div class="text-left md:text-right">
+                                <p class="text-[9px] font-bold text-gray-300 uppercase tracking-widest mb-0.5 leading-none">Total Bayar</p>
+                                <p class="text-xl font-black text-brand-red italic leading-none">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</p>
+                            </div>
+                            
+                            {{-- Tombol Lacak (Style Konsisten) --}}
+                            <a href="{{ route('user.order.show', $order->id) }}" 
+                               class="group/btn bg-gray-900 text-white text-[10px] font-black uppercase tracking-[0.2em] px-6 py-3 rounded-xl border-2 border-transparent transition-all 
+                                      shadow-[3px_3px_0px_0px_rgba(220,38,38,1)] 
+                                      hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] 
+                                      hover:translate-x-[1px] hover:translate-y-[1px] 
+                                      flex items-center gap-2">
+                                Detail <i class="fas fa-arrow-right group-hover/btn:translate-x-1 transition-transform"></i>
+                            </a>
+                        </div>
+
+                    </div>
+                </div>
+
+            @empty
+                {{-- EMPTY STATE --}}
+                <div class="bg-white rounded-[3rem] py-24 text-center border-2 border-dashed border-gray-200">
+                    <div class="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300 text-4xl border-4 border-slate-100">
+                        <i class="fas fa-receipt"></i>
+                    </div>
+                    <h3 class="text-2xl font-black text-gray-900 uppercase italic tracking-tighter">Belum ada pesanan</h3>
+                    <p class="text-xs text-gray-400 font-bold uppercase tracking-widest mt-2 mb-8">Perut lapar? Pizza enak menunggu!</p>
+                    <a href="{{ route('menu.index') }}" class="inline-flex bg-brand-red text-white font-black py-4 px-10 rounded-2xl text-xs uppercase tracking-widest hover:bg-gray-900 transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] border-2 border-transparent">
+                        Pesan Sekarang
+                    </a>
+                </div>
+            @endforelse
         </div>
 
-        @if($orders->hasPages())
-            <div class="bg-gray-50 px-6 py-4 border-t border-gray-100">
-                {{ $orders->links() }}
-            </div>
-        @endif
     </div>
-</div>
-
-<style>
-    /* Animation for table rows */
-    tr {
-        animation: fadeIn 0.3s ease-out forwards;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Staggered animation */
-    tr:nth-child(1) { animation-delay: 0.1s; }
-    tr:nth-child(2) { animation-delay: 0.2s; }
-    tr:nth-child(3) { animation-delay: 0.3s; }
-    tr:nth-child(4) { animation-delay: 0.4s; }
-    tr:nth-child(5) { animation-delay: 0.5s; }
-</style>
+</section>
 @endsection

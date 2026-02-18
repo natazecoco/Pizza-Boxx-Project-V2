@@ -10,7 +10,10 @@ class Address extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 'label', 'address', 'city', 'province', 'phone'
+        'user_id', 'label', 'address', 'city', 'province', 'phone', 
+        'is_primary', // Untuk fitur alamat utama nanti
+        'latitude',   // Izin simpan latitude
+        'longitude'   // Izin simpan longitude
     ];
 
     public function user()

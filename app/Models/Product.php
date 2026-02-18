@@ -24,6 +24,7 @@ class Product extends Model
         'base_price',
         'image_path',
         'is_available',
+        'is_best_seller',
     ];
 
     /**

@@ -13,19 +13,21 @@ class CustomerDashboardController extends Controller
     {
         $orders = Order::where('user_id', Auth::id())
             ->orderByDesc('created_at')
-            ->paginate(10);
+            ->get();
         return view('pages.customer.dashboard', compact('orders'));
     }
 
-    public function show($id)
+    public function show(Order $order) 
     {
-        // Ambil data detail pesanan, piza yang dibeli, dan lokasi cabangnya
-        $order = Order::with(['location', 'orderItems.product'])
-                    ->where('user_id', auth()->id())
-                    ->findOrFail($id);
+        // Gunakan != (tidak ketat) atau pastikan keduanya angka
+        if ((int)$order->user_id !== (int)auth()->id()) {
+            abort(403); 
+        }
 
+        $order->load(['location', 'orderItems.product']);
         return view('pages.customer.show', compact('order'));
     }
+
     public function complete($id)
     {
         $order = Order::where('user_id', auth()->id())->findOrFail($id);

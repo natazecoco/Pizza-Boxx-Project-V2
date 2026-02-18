@@ -1,0 +1,129 @@
+<footer class="bg-gray-900 text-gray-400 pt-20 pb-10 border-t-8 border-brand-red relative overflow-hidden">
+    <div class="absolute inset-0 bg-pizza-pattern opacity-[0.04] pointer-events-none"></div>
+
+    <div class="max-w-7xl mx-auto px-6 lg:px-12 relative z-10">
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-14 mb-16">
+
+            {{-- BRAND (LOGO ONLY) --}}
+            <div class="space-y-6 text-center lg:text-left">
+                <div class="flex justify-center lg:justify-start group">
+                    <img
+                        src="{{ asset('images/pizza-boxx-logo.png') }}"
+                        alt="Pizza Boxx"
+                        class="h-16 w-16 drop-shadow-2xl transition-transform duration-300 group-hover:rotate-3 group-hover:scale-105"
+                    >
+                </div>
+
+                <div class="flex justify-center lg:justify-start gap-3">
+                    @php
+                        // Ambil data langsung dari config services
+                        $socials = [
+                            ['icon' => 'fab fa-instagram', 'link' => config('services.social.instagram')],
+                            ['icon' => 'fab fa-tiktok', 'link' => config('services.social.tiktok')],
+                        ];
+                    @endphp
+
+                    @foreach($socials as $soc)
+                        <a href="{{ $soc['link'] }}" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-brand-red hover:border-brand-red transition-all duration-300 group">
+                            <i class="{{ $soc['icon'] }} text-sm transition-transform group-hover:scale-125"></i>
+                        </a>
+                    @endforeach
+                </div>
+            </div>
+
+            {{-- NAV --}}
+            <div>
+                <h3 class="text-[11px] font-black uppercase tracking-[0.35em] text-white/40 mb-6 italic">
+                    Navigasi
+                </h3>
+                <ul class="space-y-4">
+                    @foreach([
+                        ['route' => 'home', 'label' => 'Beranda'],
+                        ['route' => 'menu.index', 'label' => 'Menu'],
+                        ['route' => 'about', 'label' => 'Tentang Kami'],
+                        ['route' => 'contact', 'label' => 'Kontak'],
+                    ] as $link)
+                    <li>
+                        <a href="{{ route($link['route']) }}"
+                           class="text-sm font-bold uppercase tracking-widest flex items-center gap-2
+                                  hover:text-brand-red transition-colors group">
+                            <span class="w-0 h-0.5 bg-brand-red transition-all duration-300 group-hover:w-3"></span>
+                            {{ $link['label'] }}
+                        </a>
+                    </li>
+                    @endforeach
+                </ul>
+            </div>
+
+            {{-- LEGAL --}}
+            <div>
+                <h3 class="text-[11px] font-black uppercase tracking-[0.35em] text-white/40 mb-6 italic">
+                    Legal
+                </h3>
+                <ul class="space-y-4">
+                    @foreach(['Privacy Policy','Terms of Service','Refund Policy'] as $legal)
+                        <li>
+                            <a href="#"
+                               class="text-sm font-bold uppercase tracking-widest flex items-center gap-2
+                                      hover:text-brand-red transition-colors group">
+                                <span class="w-0 h-0.5 bg-brand-red transition-all duration-300 group-hover:w-3"></span>
+                                {{ $legal }}
+                            </a>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+
+            {{-- CONTACT --}}
+            <div class="space-y-5">
+                <h3 class="text-[11px] font-black uppercase tracking-[0.35em] text-white/40 italic">
+                    Kontak
+                </h3>
+
+                <div class="flex gap-4">
+                    <div class="w-9 h-9 rounded-xl bg-brand-red/10 flex items-center justify-center">
+                        <i class="fas fa-map-marker-alt text-brand-red"></i>
+                    </div>
+                    <p class="text-sm font-medium">
+                        123 Pizza Street, Sukahati, Bogor
+                    </p>
+                </div>
+
+                <div class="flex gap-4">
+                    <div class="w-9 h-9 rounded-xl bg-brand-red/10 flex items-center justify-center">
+                        <i class="fas fa-phone text-brand-red"></i>
+                    </div>
+                    <a href="tel:+6281218928030"
+                       class="text-sm font-bold hover:text-brand-red transition">
+                        +62 812 3456 7890
+                    </a>
+                </div>
+
+                <div class="flex gap-4">
+                    <div class="w-9 h-9 rounded-xl bg-brand-red/10 flex items-center justify-center">
+                        <i class="fas fa-clock text-brand-red"></i>
+                    </div>
+                    <p class="text-sm font-medium">
+                        Setiap hari · 10.00 – 22.00
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        {{-- BOTTOM --}}
+        <div class="pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-6">
+            <p class="text-[10px] font-black uppercase tracking-[0.3em] text-white/30">
+                <span class="text-brand-red">© {{ date('Y') }} PIZZA BOXX</span>. ALL RIGHTS RESERVED.
+            </p>
+            <div class="flex items-center gap-6 text-2xl text-white/20">
+                <i class="fab fa-cc-visa hover:text-brand-red hover:scale-110 transition-all duration-300"></i>
+                <i class="fab fa-cc-mastercard hover:text-brand-red hover:scale-110 transition-all duration-300"></i>
+                <i class="fab fa-cc-paypal hover:text-brand-red hover:scale-110 transition-all duration-300"></i>
+            </div>
+        </div>
+    </div>
+</footer>

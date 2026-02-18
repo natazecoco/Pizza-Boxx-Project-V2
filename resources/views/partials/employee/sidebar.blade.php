@@ -1,6 +1,6 @@
 <aside 
     :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
-    class="fixed inset-y-0 left-0 w-64 bg-red-600 text-white z-50 shadow-2xl transform transition-transform duration-300 ease-in-out md:translate-x-0 h-full flex flex-col border-r border-red-700">
+    class="fixed inset-y-0 left-0 w-64 bg-brand-red text-white z-50 shadow-2xl transform transition-transform duration-300 ease-in-out md:translate-x-0 h-full flex flex-col border-r border-red-700">
     
     <div class="flex flex-col h-full">
         <div class="p-6 flex items-center justify-between border-b border-white/10">
@@ -20,7 +20,7 @@
             
             <a href="{{ route('pegawai.dashboard') }}"
                class="flex items-center gap-3 px-4 py-4 rounded-2xl font-bold transition-all duration-300
-                      {{ request()->routeIs('pegawai.dashboard') ? 'bg-white text-red-600 shadow-xl' : 'text-white/80 hover:bg-white/10 hover:text-white' }}">
+                      {{ request()->routeIs('pegawai.dashboard') ? 'bg-white text-brand-red shadow-xl' : 'text-white/80 hover:bg-white/10 hover:text-white' }}">
                 <i class="fa-solid fa-gauge-high w-5"></i>
                 <span>Dashboard</span>
             </a>
@@ -31,7 +31,7 @@
 
             <a href="{{ route('pegawai.orders.index') }}"
                class="flex items-center gap-3 px-4 py-4 rounded-2xl font-bold transition-all duration-300
-                      {{ request()->routeIs('pegawai.orders.*') ? 'bg-white text-red-600 shadow-xl' : 'text-white/80 hover:bg-white/10 hover:text-white' }}">
+                      {{ request()->routeIs('pegawai.orders.*') ? 'bg-white text-brand-red shadow-xl' : 'text-white/80 hover:bg-white/10 hover:text-white' }}">
                 <i class="fa-solid fa-pizza-slice w-5"></i>
                 <span>Daftar Pesanan</span>
             </a>
@@ -42,7 +42,7 @@
 
             <a href="{{ route('pegawai.deliveries.index') }}"
                class="flex items-center gap-3 px-4 py-4 rounded-2xl font-bold transition-all duration-300
-                      {{ request()->routeIs('pegawai.deliveries.*') ? 'bg-white text-red-600 shadow-xl' : 'text-white/80 hover:bg-white/10 hover:text-white' }}">
+                      {{ request()->routeIs('pegawai.deliveries.*') ? 'bg-white text-brand-red shadow-xl' : 'text-white/80 hover:bg-white/10 hover:text-white' }}">
                 <i class="fa-solid fa-truck-fast w-5"></i>
                 <span>Pengantaran</span>
             </a>

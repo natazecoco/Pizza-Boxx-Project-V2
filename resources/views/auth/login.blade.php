@@ -1,106 +1,118 @@
 @extends('layouts.app')
 
 @section('content')
-@php
-    $type = $type ?? 'customer'; 
-@endphp
+@php $type = $type ?? 'customer'; @endphp
 
-<div class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-    <div class="w-full max-w-4xl mx-auto grid md:grid-cols-2 bg-white rounded-2xl shadow-2xl overflow-hidden">
-
-        <div class="p-8 md:p-12 flex flex-col justify-center">
+<div class="min-h-screen flex items-center justify-center bg-slate-50 p-4 lg:p-8">
+    {{-- UBAHAN: Border tebal hitam + Hard Shadow --}}
+    <div class="w-full max-w-5xl mx-auto grid lg:grid-cols-2 bg-white rounded-[3rem] shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] overflow-hidden border-4 border-gray-900">
+        
+        {{-- KIRI: Branding & Image --}}
+        <div class="hidden lg:flex bg-brand-red p-12 xl:p-16 flex-col justify-between relative overflow-hidden text-white border-r-4 border-gray-900">
+            <div class="absolute inset-0 bg-pizza-pattern opacity-10"></div>
             
-            <div class="mb-8 text-center">
-                <a href="{{ route('home') }}">
-                    <img src="{{ asset('images/pizza-boxx-logo.png') }}" alt="Pizza Boxx Logo" class="w-20 h-20 mx-auto mb-4">
+            {{-- Floating Pizza Decoration --}}
+            <img src="{{ asset('images/pizzabanner.png') }}" class="absolute -right-24 top-1/2 -translate-y-1/2 w-[120%] opacity-20 rotate-12 blur-sm pointer-events-none">
+
+            <div class="relative z-10">
+                <a href="{{ route('home') }}" class="inline-block mb-10 group">
+                    <div class="bg-white p-3 rounded-2xl border-2 border-gray-900 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] group-hover:translate-x-1 group-hover:translate-y-1 group-hover:shadow-none transition-all">
+                        <img src="{{ asset('images/pizza-boxx-logo.png') }}" class="w-12 h-12 object-contain">
+                    </div>
                 </a>
-                @if($type === 'employee')
-                    <h1 class="text-3xl font-extrabold text-gray-900">Portal Karyawan</h1>
-                    <p class="text-gray-600 mt-1">Silakan masuk untuk mengakses dashboard Anda.</p>
-                @else
-                    <h1 class="text-3xl font-extrabold text-gray-900">Selamat Datang Kembali!</h1>
-                    <p class="text-gray-600 mt-1">Silakan masuk untuk melanjutkan pesanan Anda.</p>
-                @endif
+                <h2 class="text-5xl font-black italic uppercase tracking-tighter leading-[0.9] mb-6 drop-shadow-md">
+                    PIZZA<br>TERENAK<br><span class="text-brand-kraft text-6xl">SEJAGAT.</span>
+                </h2>
+                <p class="text-white/90 font-bold text-sm leading-relaxed max-w-xs border-l-4 border-brand-kraft pl-4">
+                    Masuk ke akun Anda dan nikmati promo eksklusif setiap harinya.
+                </p>
             </div>
 
+            <div class="relative z-10 bg-gray-900 p-6 rounded-3xl border-2 border-white/20 shadow-xl mt-12">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-full bg-brand-kraft flex items-center justify-center text-brand-red font-black text-xl">“</div>
+                    <div>
+                        <p class="text-[10px] font-black uppercase tracking-[0.2em] mb-1 text-brand-kraft">Trending Review</p>
+                        <p class="text-sm font-bold italic text-white">"Keju melimpah, harga ramah di kantong!"</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- KANAN: Form Section --}}
+        <div class="p-8 md:p-16 flex flex-col justify-center bg-white relative">
+            {{-- Tombol Balik Mobile --}}
+            <a href="{{ route('home') }}" class="lg:hidden absolute top-6 right-6 text-gray-400 hover:text-brand-red">
+                <i class="fas fa-times text-xl"></i>
+            </a>
+
+            <div class="mb-8 lg:hidden text-center">
+                <img src="{{ asset('images/pizza-boxx-logo.png') }}" class="w-20 mx-auto">
+            </div>
+
+            <div class="mb-10 text-center lg:text-left">
+                <h1 class="text-3xl lg:text-5xl font-black text-gray-900 italic uppercase tracking-tighter leading-none mb-2">
+                    {{ $type === 'employee' ? 'PORTAL STAFF' : 'WELCOME BACK' }}
+                </h1>
+                <p class="text-gray-400 text-[10px] font-black uppercase tracking-[0.2em]">
+                    {{ $type === 'employee' ? 'Area Terbatas - Khusus Karyawan' : 'Silakan masuk untuk mulai memesan' }}
+                </p>
+            </div>
+
+            {{-- Alert Error --}}
             @if ($errors->any())
-                <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-r-lg" role="alert">
-                    <p class="font-bold">Oops! Terjadi kesalahan.</p>
-                    <ul>
-                        @foreach ($errors->all() as $error)
-                            <li class="text-sm">{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-            @if(session('error'))
-                <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-r-lg" role="alert">
-                    <p class="font-bold">Login Gagal</p>
-                    <p class="text-sm">{{ session('error') }}</p>
+                <div class="bg-red-50 border-2 border-brand-red p-4 mb-8 rounded-xl flex items-start gap-3">
+                    <i class="fas fa-exclamation-triangle text-brand-red mt-0.5"></i>
+                    <div>
+                        <p class="text-brand-red text-[10px] font-black uppercase tracking-widest">Login Gagal</p>
+                        <p class="text-xs text-red-600 font-medium">Periksa email atau password Anda.</p>
+                    </div>
                 </div>
             @endif
 
-            <form method="POST" action="{{ $type === 'employee' ? route('pegawai.login') : route('login') }}" class="space-y-6">
-                @csrf
-                <div>
-                    <label for="email" class="block text-sm font-semibold text-gray-700 mb-1">
-                        {{ $type === 'employee' ? 'Email Pegawai' : 'Email' }}
-                    </label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-3">
-                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"></path></svg>
-                        </span>
-                        <input id="email" name="email" type="email" autocomplete="email" required
-                               class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all"
-                               placeholder="{{ $type === 'employee' ? 'pegawai@pizzaboxx.com' : 'anda@email.com' }}" value="{{ old('email') }}">
+            @if($type === 'employee')
+                {{-- Form Pegawai --}}
+                <form method="POST" action="{{ route('pegawai.login') }}" class="space-y-6">
+                    @csrf
+                    <div class="group">
+                        <label class="block text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-2 ml-1 group-focus-within:text-brand-red transition-colors">ID Karyawan / Email</label>
+                        <input name="email" type="email" required 
+                               class="w-full px-5 py-4 bg-white border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] outline-none font-bold text-gray-900 transition-all placeholder-gray-300" 
+                               placeholder="staff@pizzaboxx.com">
                     </div>
-                </div>
-
-                <div>
-                    <div class="flex justify-between items-center mb-1">
-                        <label for="password" class="block text-sm font-semibold text-gray-700">Password</label>
-                        @if($type === 'customer')
-                            <a href="#" class="text-sm font-medium text-red-600 hover:text-red-500">Lupa password?</a>
-                        @endif
-                    </div>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-3">
-                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                        </span>
-                        <input id="password" name="password" type="password" autocomplete="current-password" required
-                               class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all"
+                    
+                    <div class="group">
+                        {{-- UPDATED: Tambah Link Lupa Password (Dummy) --}}
+                        <div class="flex justify-between items-center mb-2 ml-1">
+                            <label class="block text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 group-focus-within:text-brand-red transition-colors">Sandi Akses</label>
+                            <a href="javascript:void(0)" 
+                               onclick="Swal.fire({icon: 'info', title: 'Lupa Password?', text: 'Silakan hubungi IT Support untuk reset akses pegawai.', confirmButtonColor: '#DC2626'})" 
+                               class="text-[9px] font-black uppercase tracking-widest text-brand-red hover:underline italic transition-colors">
+                               Lupa?
+                            </a>
+                        </div>
+                        
+                        <input name="password" type="password" required 
+                               class="w-full px-5 py-4 bg-white border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] outline-none font-bold text-gray-900 transition-all placeholder-gray-300" 
                                placeholder="••••••••">
                     </div>
-                </div>
-
-                @if($type === 'customer')
-                    <div class="flex items-center">
-                        <input id="remember_me" name="remember" type="checkbox"
-                               class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
-                        <label for="remember_me" class="ml-2 block text-sm text-gray-900">Ingat saya</label>
-                    </div>
-                @endif
-                
-                <div>
-                    <button type="submit"
-                            class="w-full flex justify-center py-3 px-4 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5">
-                        Login
+                    
+                    <button type="submit" class="w-full bg-gray-900 text-white font-black py-5 rounded-xl uppercase tracking-[0.2em] text-xs shadow-[4px_4px_0px_0px_rgba(220,38,38,1)] hover:bg-brand-red hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all border-2 border-transparent">
+                        MASUK DASHBOARD
                     </button>
-                </div>
+                </form>
+            @else
+                {{-- Form Customer (Sudah pakai partial yang kita update sebelumnya) --}}
+                @include('partials.customer._login-form')
                 
-                @if($type === 'customer')
-                    <p class="mt-8 text-center text-sm text-gray-600">
-                        Belum punya akun?
-                        <a href="{{ route('register') }}" class="font-semibold text-red-600 hover:text-red-500">Daftar sekarang</a>
+                <div class="mt-10 pt-8 border-t-2 border-dashed border-gray-100 text-center lg:text-left">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                        Belum punya akun? 
+                        <a href="{{ route('register') }}" class="text-brand-red hover:text-gray-900 underline decoration-2 underline-offset-2 transition-colors ml-1">Daftar Sekarang →</a>
                     </p>
-                @endif
-            </form>
+                </div>
+            @endif
         </div>
-
-        <div class="hidden md:block">
-            <img src="{{ $type === 'employee' ? 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=1887' : asset('images/pizzabanner.jpg') }}" alt="Gambar ilustrasi" class="w-full h-full object-cover">
-        </div>
-
     </div>
 </div>
 @endsection

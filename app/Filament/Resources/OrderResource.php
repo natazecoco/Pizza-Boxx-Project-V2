@@ -5,10 +5,8 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\OrderResource\Pages;
 use App\Models\Order;
 use App\Models\User;
-use App\Models\Location;
 use App\Models\Promo;
 use App\Models\Product;
-use App\Models\OrderItem; // Pastikan ini ada
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -19,7 +17,6 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\SelectColumn;
 use Filament\Forms\Components\Wizard;
 use Filament\Forms\Components\Wizard\Step;
 use Filament\Forms\Components\Repeater;
@@ -28,7 +25,6 @@ use Filament\Forms\Set;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Auth;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 
 class OrderResource extends Resource
@@ -43,7 +39,7 @@ class OrderResource extends Resource
         $user = auth('employee')->user();
 
         // Gunakan fungsi Cara B yang kita buat di Model User
-        if ($user->isBranchManager()) {
+        if ($user && $user->isBranchManager()) {
             return $query->where('location_id', $user->location_id);
         }
 
@@ -113,7 +109,7 @@ class OrderResource extends Resource
                                             if ($user) {
                                                 $set('customer_name', $user->name);
                                                 $set('customer_email', $user->email);
-                                                $set('customer_phone', $user->phone); // Asumsi ada kolom phone di tabel users
+                                                $set('customer_phone', $user->phone_number ?? ''); // Sesuaikan kolom phone di tabel users
                                             }
                                         }),
                                     TextInput::make('customer_name')
@@ -155,12 +151,31 @@ class OrderResource extends Resource
                                             'online' => 'Online Payment',
                                             'cash_on_delivery' => 'Cash on Delivery (COD)',
                                             'card_on_pickup' => 'Card on Pickup',
+                                            'cash_on_pickup' => 'Cash on Pickup',
                                         ])
                                         ->required()
                                         ->native(false)
                                         ->live()
                                         ->label('Metode Pembayaran'),
                                 ]),
+                                
+                            // === TAMBAHAN FIELD BARU (PIN & GPS) ===
+                            Forms\Components\Grid::make(2)
+                                ->schema([
+                                    TextInput::make('pickup_pin')
+                                        ->label('PIN Verifikasi')
+                                        ->readOnly() // Admin cuma bisa lihat, gak boleh edit sembarangan
+                                        ->placeholder('Otomatis dari Sistem'),
+                                        
+                                    // Sembunyikan Lat/Long di form edit biasa biar gak menuhin layar
+                                    // Tapi tetap ada datanya
+                                    Forms\Components\Group::make([
+                                        TextInput::make('latitude')->readOnly(),
+                                        TextInput::make('longitude')->readOnly(),
+                                    ])->visible(false), 
+                                ]),
+                            // =======================================
+
                             Textarea::make('delivery_address')
                                 ->nullable()
                                 ->columnSpanFull()
@@ -289,21 +304,37 @@ class OrderResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('id')
-                    ->label('ID Pesanan')
+                TextColumn::make('order_code') // Pakai Order Code yang baru (PBX-...)
+                    ->label('Kode')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->copyable() // Biar Admin gampang copy
+                    ->weight('bold'),
                 TextColumn::make('customer_name')
                     ->searchable()
                     ->sortable()
                     ->label('Pelanggan'),
+                
+                // === KOLOM BARU: PIN ===
+                TextColumn::make('pickup_pin')
+                    ->label('PIN')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true) // Sembunyikan default biar tabel gak penuh
+                    ->copyable(),
+                // =======================
+
                 TextColumn::make('location.name')
                     ->searchable()
                     ->sortable()
                     ->label('Toko'),
                 TextColumn::make('order_type')
                     ->label('Tipe')
-                    ->badge(),
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'delivery' => 'danger', // Merah
+                        'pickup' => 'info',     // Biru
+                        default => 'gray',
+                    }),
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
@@ -329,14 +360,9 @@ class OrderResource extends Resource
                             ->money('IDR')
                     ),
                 TextColumn::make('created_at')
-                    ->dateTime()
+                    ->dateTime('d M Y, H:i') // Format tanggal lebih enak dibaca
                     ->sortable()
                     ->label('Dibuat'),
-                TextColumn::make('deliveryEmployee.name')
-                    ->label('Pegawai Pengantar'),
-                TextColumn::make('delivered_at')
-                    ->dateTime()
-                    ->label('Waktu Selesai'),
             ])
             ->filters([
                 SelectFilter::make('status')
@@ -362,9 +388,6 @@ class OrderResource extends Resource
                     ->relationship('location', 'name')
                     ->label('Filter Lokasi')
                     ->hidden(fn () => auth('employee')->user()?->isBranchManager() ?? false),
-                SelectFilter::make('delivery_employee_id')
-                    ->relationship('deliveryEmployee', 'name', fn (Builder $query) => $query->where('role', 'employee'))
-                    ->label('Filter Pegawai'),
                 Tables\Filters\Filter::make('created_at')
                     ->form([
                         DatePicker::make('created_from')
@@ -385,13 +408,22 @@ class OrderResource extends Resource
                     }),
             ])
             ->actions([
+                // === ACTION BARU: BUKA GOOGLE MAPS (PIN POINT) ===
+                Tables\Actions\Action::make('open_gps')
+                    ->label('GPS')
+                    ->icon('heroicon-o-map-pin')
+                    ->color('info')
+                    ->url(fn (Order $record) => "https://www.google.com/maps/search/?api=1&query={$record->latitude},{$record->longitude}")
+                    ->openUrlInNewTab()
+                    ->visible(fn (Order $record) => $record->latitude && $record->longitude), // Hanya muncul kalau ada datanya
+                // =================================================
+
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
-                    // Ekspor ke Excel menggunakan paket filament-excel
                     ExportBulkAction::make()
                     ->label('Ekspor ke Excel')
                     ->icon('heroicon-o-arrow-down-tray')

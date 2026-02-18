@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout | Pizza Boxx</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,600;0,800;1,800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-red': '#A41F21', 
+                        'brand-dark': '#111827',
+                    },
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: #F8FAFC; color: #111827; }
+        
+        .bg-pizza-pattern {
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 15l-5.5 11h11L30 15zm0-10l15 30H15L30 5z' fill='%23ED1C24' fill-opacity='0.03' fill-rule='evenodd'/%3E%3C/svg%3E");
+        }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50 pb-20">
+
+    {{-- HEADER --}}
+    <header class="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100 mb-8">
+        <div class="max-w-7xl mx-auto px-4 lg:px-8 py-4 flex items-center justify-between">
+            <a href="{{ route('cart.index') }}" class="text-xs font-black uppercase tracking-widest text-gray-400 hover:text-brand-red transition-colors group">
+                <i class="fas fa-arrow-left mr-1 group-hover:-translate-x-1 transition-transform"></i> KEMBALI
+            </a>
+            <h1 class="text-lg font-black italic text-gray-900 tracking-tighter">CHECKOUT</h1>
+            <div class="w-10"></div>
+        </div>
+    </header>
+
+    <main class="px-4 lg:px-8">
+        
+        <form id="checkoutForm" action="{{ route('checkout.process') }}" method="POST" class="flex flex-col lg:flex-row gap-8 max-w-7xl mx-auto">
+            @csrf
+
+            {{-- ================= KIRI: INPUT DATA ================= --}}
+            <div class="w-full lg:w-2/3">
+                <div class="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden relative">
+                    {{-- Aksen Merah --}}
+                    <div class="h-1.5 w-full bg-brand-red"></div>
+                    <div class="absolute top-0 inset-x-0 h-32 bg-pizza-pattern opacity-100 pointer-events-none"></div>
+
+                    <div class="p-6 md:p-10 relative z-10">
+                        
+                        {{-- Judul Section --}}
+                        <div class="mb-8">
+                            <h2 class="text-2xl font-black italic text-gray-900 tracking-tight">Detail Pesanan</h2>
+                            <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">LENGKAPI DATA PENGIRIMAN</p>
+                        </div>
+
+                        {{-- 1. METODE ORDER --}}
+                        <div class="mb-10">
+                            <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block ml-1">METODE PESANAN</label>
+                            <div class="grid grid-cols-2 gap-3 p-1.5 bg-slate-50 rounded-2xl border border-gray-100">
+                                <label class="cursor-pointer relative">
+                                    <input type="radio" name="order_type" value="delivery" id="order_type_delivery" class="peer hidden" checked>
+                                    <div class="py-3 px-4 rounded-xl text-center transition-all peer-checked:bg-white peer-checked:text-brand-red peer-checked:shadow-sm text-gray-400 font-bold hover:text-gray-600">
+                                        <i class="fas fa-motorcycle mr-1"></i> Delivery
+                                    </div>
+                                </label>
+                                <label class="cursor-pointer relative">
+                                    <input type="radio" name="order_type" value="pickup" id="order_type_pickup" class="peer hidden">
+                                    <div class="py-3 px-4 rounded-xl text-center transition-all peer-checked:bg-white peer-checked:text-brand-red peer-checked:shadow-sm text-gray-400 font-bold hover:text-gray-600">
+                                        <i class="fas fa-store mr-1"></i> Pickup
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        {{-- 2. LOKASI --}}
+                        <div class="mb-10">
+                            {{-- Dropdown Cabang --}}
+                            <div class="mb-6 relative group" id="branch-selector-container">
+                                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block ml-1">LOKASI OUTLET</label>
+                                
+                                <select name="location_id" id="location_id" class="hidden">
+                                    <option value="">-- PILIH CABANG --</option>
+                                    @foreach($locations as $location)
+                                        <option value="{{ $location->id }}" data-address="{{ $location->address }}" data-map-url="{{ $location->maps_url }}">
+                                            {{ $location->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                
+                                <div id="branch-trigger" class="w-full bg-white border-2 border-gray-100 p-4 rounded-2xl cursor-pointer flex items-center justify-between hover:border-brand-red transition-all group">
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-10 h-10 rounded-xl bg-slate-50 text-gray-400 flex items-center justify-center group-hover:bg-brand-red group-hover:text-white transition-colors border border-gray-100">
+                                            <i class="fas fa-store-alt"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-[10px] font-black uppercase text-gray-400 tracking-widest">DARI CABANG</p>
+                                            <h4 id="selected-branch-name" class="text-sm font-black text-gray-900 uppercase">PILIH CABANG DULU...</h4>
+                                        </div>
+                                    </div>
+                                    <i class="fas fa-chevron-down text-gray-300 group-hover:text-brand-red"></i>
+                                </div>
+
+                                <div id="branch-options" class="hidden absolute top-full left-0 w-full bg-white border border-gray-100 rounded-2xl shadow-xl mt-2 z-50 overflow-hidden">
+                                    @foreach($locations as $location)
+                                        <div onclick="selectBranchCustom('{{ $location->id }}', '{{ $location->name }}', '{{ $location->address }}')" 
+                                             class="p-4 cursor-pointer hover:bg-slate-50 border-b border-gray-50 last:border-0 transition-all flex gap-3 items-center">
+                                            <i class="fas fa-map-marker-alt text-gray-300"></i>
+                                            <div>
+                                                <h5 class="text-sm font-bold text-gray-900 uppercase">{{ $location->name }}</h5>
+                                                <p class="text-[10px] text-gray-500 mt-0.5">{{ Str::limit($location->address, 50) }}</p>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            {{-- Delivery Address --}}
+                            <div id="address_section" class="animate-fade-in">
+                                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block ml-1">ALAMAT PENGIRIMAN</label>
+                                <div class="border-2 border-dashed border-gray-200 rounded-2xl p-5 relative hover:bg-slate-50 transition-all bg-white">
+                                    <div class="flex justify-between items-start mt-1">
+                                        <div>
+                                            <h4 id="display_label" class="text-sm font-black text-gray-900 uppercase mb-1">{{ $primaryAddress ? $primaryAddress->label : 'BELUM DIPILIH' }}</h4>
+                                            <p id="display_address" class="text-xs text-gray-500 font-bold leading-relaxed max-w-xs">{{ $primaryAddress ? $primaryAddress->address : 'Silakan pilih alamat dari buku alamat.' }}</p>
+                                            <p id="display_phone" class="text-[10px] font-black text-brand-red mt-2 tracking-wide">{{ $primaryAddress ? $primaryAddress->phone : '' }}</p>
+                                        </div>
+                                        <button type="button" onclick="openAddressBook()" class="bg-gray-900 text-white text-[10px] font-black px-4 py-2 rounded-xl hover:bg-brand-red transition-all uppercase tracking-widest">
+                                            UBAH
+                                        </button>
+                                    </div>
+
+                                    <input type="hidden" name="delivery_address" id="inp_address" value="{{ $primaryAddress ? $primaryAddress->address : '' }}">
+                                    <input type="hidden" name="latitude" id="inp_lat" value="{{ $primaryAddress ? $primaryAddress->latitude : '' }}">
+                                    <input type="hidden" name="longitude" id="inp_lng" value="{{ $primaryAddress ? $primaryAddress->longitude : '' }}">
+                                </div>
+                                <input type="text" name="delivery_notes" id="inp_notes" placeholder="Catatan tambahan (Pagar hitam, dll)..." 
+                                       class="w-full mt-4 bg-transparent border-b border-gray-200 p-2 text-sm font-bold text-gray-900 focus:border-brand-red outline-none placeholder:text-gray-300 placeholder:font-bold transition-colors">
+                            </div>
+
+                            {{-- Pickup Info --}}
+                            <div id="pickup_section" class="hidden animate-fade-in">
+                                <div class="bg-slate-50 border border-gray-200 rounded-2xl p-6 text-center">
+                                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">AMBIL PESANAN DI</p>
+                                    <h4 id="pickup_display" class="text-xl font-black text-gray-900 italic uppercase">-</h4>
+                                    <p id="pickup_address_display" class="text-xs font-bold text-gray-500 mt-1 mb-4">-</p>
+                                    <a id="pickup_map_link" href="#" target="_blank" class="inline-flex items-center gap-2 text-[10px] font-black uppercase text-brand-red hover:underline decoration-2 underline-offset-4">
+                                        <i class="fas fa-map-marked-alt"></i> BUKA GOOGLE MAPS
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- 3. PEMBAYARAN (UPGRADED VERSION) --}}
+                        <div class="mb-10">
+                            <div class="flex justify-between items-end mb-4">
+                                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest block ml-1">METODE PEMBAYARAN</label>
+                                <span class="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-lg border border-green-100">
+                                    <i class="fas fa-shield-alt mr-1"></i> Transaksi Aman
+                                </span>
+                            </div>
+                            
+                            <div class="space-y-3">
+                                
+                                {{-- COD (Cash On Delivery) --}}
+                                <div id="method_cod">
+                                    <label class="relative block cursor-pointer group">
+                                        <input type="radio" name="payment_method" value="cash_on_delivery" class="peer sr-only" checked>
+                                        
+                                        {{-- Container Kartu --}}
+                                        <div class="p-5 rounded-2xl border-2 border-gray-100 bg-white transition-all duration-200 
+                                                    peer-checked:border-brand-red peer-checked:bg-red-50/30 peer-checked:shadow-md 
+                                                    hover:border-gray-300 group-hover:shadow-sm flex items-center justify-between">
+                                            
+                                            <div class="flex items-center gap-4">
+                                                {{-- Icon Box --}}
+                                                <div class="w-12 h-12 rounded-xl bg-green-100 text-green-600 flex items-center justify-center text-xl shadow-sm border border-green-200">
+                                                    <i class="fas fa-money-bill-wave"></i>
+                                                </div>
+                                                
+                                                {{-- Teks --}}
+                                                <div>
+                                                    <h4 class="text-sm font-black text-gray-900 uppercase tracking-tight flex items-center gap-2">
+                                                        Tunai (COD)
+                                                        <span class="hidden peer-checked:inline-block bg-brand-red text-white text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Dipilih</span>
+                                                    </h4>
+                                                    <p class="text-[10px] font-bold text-gray-500 mt-0.5">Bayar ke kurir saat pesanan sampai</p>
+                                                </div>
+                                            </div>
+
+                                            {{-- Radio Circle Custom --}}
+                                            <div class="w-6 h-6 rounded-full border-2 border-gray-300 flex items-center justify-center peer-checked:border-brand-red peer-checked:bg-brand-red transition-all">
+                                                <i class="fas fa-check text-white text-[10px] opacity-0 peer-checked:opacity-100"></i>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+
+                                {{-- Pickup Payment (Bayar di Kasir) --}}
+                                <div id="method_pickup" class="hidden">
+                                    <label class="relative block cursor-pointer group">
+                                        <input type="radio" name="payment_method" value="cash_on_pickup" class="peer sr-only">
+                                        
+                                        <div class="p-5 rounded-2xl border-2 border-gray-100 bg-white transition-all duration-200 
+                                                    peer-checked:border-brand-red peer-checked:bg-red-50/30 peer-checked:shadow-md 
+                                                    hover:border-gray-300 group-hover:shadow-sm flex items-center justify-between">
+                                            
+                                            <div class="flex items-center gap-4">
+                                                {{-- Icon Box --}}
+                                                <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl shadow-sm border border-blue-200">
+                                                    <i class="fas fa-store"></i>
+                                                </div>
+                                                
+                                                {{-- Teks --}}
+                                                <div>
+                                                    <h4 class="text-sm font-black text-gray-900 uppercase tracking-tight">Bayar di Kasir</h4>
+                                                    <p class="text-[10px] font-bold text-gray-500 mt-0.5">Cash / QRIS / Debit di Outlet</p>
+                                                </div>
+                                            </div>
+
+                                            {{-- Radio Circle Custom --}}
+                                            <div class="w-6 h-6 rounded-full border-2 border-gray-300 flex items-center justify-center peer-checked:border-brand-red peer-checked:bg-brand-red transition-all">
+                                                <i class="fas fa-check text-white text-[10px] opacity-0 peer-checked:opacity-100"></i>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+
+                                {{-- QRIS (OPSIONAL - Kalau mau terlihat canggih walau dummy dulu) --}}
+                                {{-- 
+                                <div class="opacity-50 grayscale cursor-not-allowed">
+                                    <div class="p-4 rounded-2xl border-2 border-gray-100 bg-gray-50 flex items-center gap-4">
+                                        <div class="w-12 h-12 rounded-xl bg-gray-200 flex items-center justify-center text-gray-400">
+                                            <i class="fas fa-qrcode"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="text-sm font-bold text-gray-400 uppercase">QRIS (Coming Soon)</h4>
+                                            <p class="text-[10px] font-bold text-gray-400">Pembayaran digital sedang disiapkan</p>
+                                        </div>
+                                    </div>
+                                </div> 
+                                --}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- ================= KANAN: SUMMARY ================= --}}
+            <div class="w-full lg:w-1/3">
+                <div class="bg-white rounded-[2.5rem] shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden relative lg:sticky lg:top-24">
+                    
+                    <div class="absolute inset-0 bg-pizza-pattern opacity-100 pointer-events-none"></div>
+                    
+                    <div class="p-6 md:p-8 relative z-10">
+                        <h3 class="text-lg font-black uppercase text-gray-900 tracking-tighter mb-6 border-b border-dashed border-gray-200 pb-4">RINGKASAN</h3>
+
+                        {{-- List Item --}}
+                        <div class="space-y-4 mb-6 max-h-60 overflow-y-auto custom-scrollbar pr-2">
+                            @foreach($cart as $item)
+                                <div class="flex justify-between items-start">
+                                    <div class="flex gap-3">
+                                        <div class="w-6 h-6 rounded bg-red-50 text-brand-red font-black text-[10px] flex items-center justify-center border border-red-100 shrink-0">
+                                            {{ $item['quantity'] }}x
+                                        </div>
+                                        <div>
+                                            <h4 class="text-xs font-bold text-gray-900 uppercase leading-tight">{{ $item['name'] }}</h4>
+                                            <div class="text-[9px] text-gray-400 font-bold leading-tight mt-0.5 uppercase">
+                                                @if(isset($item['size_option']['name'])) {{ $item['size_option']['name'] }} @endif
+                                                @if(isset($item['crust_option']['name'])) • {{ $item['crust_option']['name'] }} @endif
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-xs font-bold text-gray-900 shrink-0">
+                                        Rp {{ number_format($item['total_price'], 0, ',', '.') }}
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        {{-- Promo --}}
+                        <div class="flex gap-2 mb-6">
+                            <input type="text" id="promo_code" placeholder="KODE PROMO" class="flex-grow bg-slate-50 border border-gray-200 px-3 py-2 rounded-lg text-xs font-black uppercase focus:border-brand-red outline-none">
+                            <button type="button" id="btn_promo" class="bg-gray-900 text-white px-4 rounded-lg text-[10px] font-black uppercase hover:bg-gray-700 transition-all">CEK</button>
+                        </div>
+
+                        {{-- Totalan --}}
+                        <div class="space-y-2 mb-6 border-t border-dashed border-gray-200 pt-4">
+                            <div class="flex justify-between text-xs text-gray-500 font-bold uppercase">
+                                <span>Subtotal</span>
+                                <span>Rp {{ number_format($cartTotal, 0, ',', '.') }}</span>
+                            </div>
+                            <div class="flex justify-between text-xs text-gray-500 font-bold uppercase" id="row_fee">
+                                <span>Ongkir</span>
+                                <span id="txt_fee">Rp 0</span>
+                            </div>
+                            <div class="flex justify-between text-xs text-green-600 font-black uppercase hidden" id="row_discount">
+                                <span>Diskon</span>
+                                <span id="txt_discount">- Rp 0</span>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-center mb-6 pt-2 border-t-2 border-gray-900">
+                            <span class="font-black text-gray-900 uppercase tracking-widest text-sm">TOTAL BAYAR</span>
+                            <span class="font-black text-brand-red text-2xl" id="txt_total">Rp {{ number_format($cartTotal, 0, ',', '.') }}</span>
+                        </div>
+
+                        {{-- Hidden Inputs --}}
+                        <input type="hidden" name="subtotal_amount" value="{{ $cartTotal }}">
+                        <input type="hidden" name="delivery_fee" id="inp_fee" value="0">
+                        <input type="hidden" name="discount_amount" id="inp_discount" value="0">
+                        <input type="hidden" name="total_amount" id="inp_total" value="{{ $cartTotal }}">
+                        <input type="hidden" name="customer_name" value="{{ $user->name }}">
+                        <input type="hidden" name="customer_email" value="{{ $user->email }}">
+                        <input type="hidden" name="customer_phone" value="{{ $primaryAddress->phone ?? $user->phone_number }}">
+
+                        {{-- Tombol Submit --}}
+                        <button type="submit" id="btn_submit" class="w-full bg-brand-red text-white font-black py-4 rounded-xl shadow-lg shadow-red-200 hover:bg-red-700 hover:shadow-xl transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed tracking-[0.2em] text-xs uppercase">
+                            KONFIRMASI PESANAN
+                        </button>
+                        <p class="text-[9px] text-gray-400 text-center mt-3 font-bold uppercase">PASTIKAN DATA SUDAH BENAR</p>
+                    </div>
+                </div>
+            </div>
+
+        </form>
+    </main>
+
+    {{-- MODAL ADDRESS BOOK --}}
+    <div id="modalAddressBook" class="fixed inset-0 z-[100] hidden bg-black/80 backdrop-blur-sm p-4 flex items-center justify-center animate-fade-in">
+        <div class="bg-white w-full max-w-xl rounded-[2rem] shadow-2xl flex flex-col max-h-[80vh] overflow-hidden">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-10">
+                <h3 class="text-lg font-black uppercase italic text-gray-900 tracking-tighter">PILIH ALAMAT</h3>
+                <button onclick="document.getElementById('modalAddressBook').classList.add('hidden')" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-red-100 text-gray-400 hover:text-red-600 transition-all"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-4 overflow-y-auto custom-scrollbar space-y-3 bg-slate-50 flex-grow">
+                @forelse($addresses as $addr)
+                    <div onclick="selectAddress({{ json_encode($addr) }})" class="group cursor-pointer p-5 rounded-2xl border-2 border-white bg-white shadow-sm hover:border-brand-red hover:shadow-md transition-all relative">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="bg-gray-900 text-white text-[9px] font-black uppercase px-2 py-1 rounded-md tracking-widest">{{ $addr->label }}</span>
+                                <p class="text-sm font-bold text-gray-800 mt-2 uppercase">{{ $addr->address }}</p>
+                                <p class="text-xs text-gray-400 font-bold mt-1 uppercase">{{ $addr->city }} • {{ $addr->phone }}</p>
+                            </div>
+                            <i class="fas fa-check-circle text-gray-200 text-xl group-hover:text-brand-red transition-colors"></i>
+                        </div>
+                    </div>
+                @empty
+                    <div class="text-center py-10"><p class="text-gray-400 font-bold text-xs uppercase">BELUM ADA ALAMAT TERSIMPAN.</p></div>
+                @endforelse
+            </div>
+            <div class="p-4 border-t border-gray-100 bg-white">
+                <a href="{{ route('user.profile') }}#address" class="block w-full border-2 border-dashed border-gray-300 text-gray-400 font-bold py-3 rounded-xl text-center uppercase text-xs tracking-widest hover:border-brand-red hover:text-brand-red transition-all">+ TAMBAH ALAMAT BARU</a>
+            </div>
+        </div>
+    </div>
+    
+    {{-- SCRIPT --}}
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const subtotal = parseFloat("{{ $cartTotal }}") || 0;
+        let currentFee = 0;
+        let currentDiscount = 0;
+
+        const el = {
+            realSelect: document.getElementById('location_id'),
+            branchTrigger: document.getElementById('branch-trigger'),
+            branchOptions: document.getElementById('branch-options'),
+            branchNameDisplay: document.getElementById('selected-branch-name'),
+            triggerContainer: document.getElementById('branch-selector-container'),
+            btn: document.getElementById('btn_submit'),
+            orderTypeDelivery: document.getElementById('order_type_delivery'),
+            orderTypePickup: document.getElementById('order_type_pickup'),
+            methodCod: document.getElementById('method_cod'),
+            methodPickup: document.getElementById('method_pickup'),
+            total: document.getElementById('txt_total'),
+            fee: document.getElementById('txt_fee'),
+            rowFee: document.getElementById('row_fee'),
+            rowDisc: document.getElementById('row_discount'),
+            txtDisc: document.getElementById('txt_discount'),
+            inpFee: document.getElementById('inp_fee'),
+            inpDiscount: document.getElementById('inp_discount'),
+            inpTotal: document.getElementById('inp_total'),
+            secAddr: document.getElementById('address_section'),
+            lblDisplay: document.getElementById('display_label'),
+            addrDisplay: document.getElementById('display_address'),
+            phoneDisplay: document.getElementById('display_phone'),
+            inpLat: document.getElementById('inp_lat'),
+            inpLng: document.getElementById('inp_lng'),
+            inpAddr: document.getElementById('inp_address'),
+            secPickup: document.getElementById('pickup_section'),
+            displayPickupName: document.getElementById('pickup_display'),
+            displayPickupAddr: document.getElementById('pickup_address_display'),
+            btnPickupMap: document.getElementById('pickup_map_link'),
+            promoCode: document.getElementById('promo_code'),
+            btnPromo: document.getElementById('btn_promo')
+        };
+
+        // --- DROPDOWN LOGIC ---
+        if(el.branchTrigger) {
+            el.branchTrigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                el.branchOptions.classList.toggle('hidden');
+                el.branchTrigger.classList.toggle('border-brand-red');
+            });
+        }
+        document.addEventListener('click', (e) => {
+            if (el.triggerContainer && !el.triggerContainer.contains(e.target)) {
+                el.branchOptions.classList.add('hidden');
+                el.branchTrigger.classList.remove('border-brand-red');
+            }
+        });
+        window.selectBranchCustom = function(id, name, address) {
+            el.branchNameDisplay.innerText = name;
+            el.branchTrigger.classList.add('bg-white', 'border-brand-red');
+            el.branchTrigger.classList.remove('bg-slate-50', 'border-slate-200');
+            el.branchOptions.classList.add('hidden');
+            el.realSelect.value = id;
+            el.realSelect.dispatchEvent(new Event('change'));
+        };
+
+        // --- CORE LOGIC ---
+        el.realSelect.addEventListener('change', function() {
+            const selected = this.options[this.selectedIndex];
+            const name = selected.text.trim();
+            const address = selected.getAttribute('data-address') || '';
+            let mapUrl = selected.getAttribute('data-map-url');
+            el.displayPickupName.innerText = name;
+            el.displayPickupAddr.innerText = address;
+            if (!mapUrl || mapUrl === 'null') {
+                mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name + ' ' + address)}`;
+            }
+            el.btnPickupMap.href = mapUrl;
+            calculateTotal();
+        });
+
+        const toggleOrderType = () => {
+            if(el.orderTypeDelivery.checked) {
+                el.secAddr.style.display = 'block';
+                el.secPickup.style.display = 'none';
+                el.rowFee.classList.remove('hidden');
+                el.methodCod.classList.remove('hidden');
+                el.methodPickup.classList.add('hidden');
+                el.methodCod.querySelector('input').checked = true;
+                calculateTotal(); 
+            } else {
+                el.secAddr.style.display = 'none';
+                el.secPickup.style.display = 'block';
+                el.rowFee.classList.add('hidden');
+                el.methodCod.classList.add('hidden');
+                el.methodPickup.classList.remove('hidden');
+                el.methodPickup.querySelector('input').checked = true;
+                currentFee = 0; 
+                updateSummary();
+            }
+        };
+        el.orderTypeDelivery.addEventListener('change', toggleOrderType);
+        el.orderTypePickup.addEventListener('change', toggleOrderType);
+
+        // --- CALCULATE ---
+        function calculateTotal() {
+            if(!el.orderTypeDelivery.checked) {
+                currentFee = 0;
+                updateSummary();
+                return;
+            }
+            const locId = el.realSelect.value;
+            const userLat = el.inpLat.value;
+            const userLng = el.inpLng.value;
+            if(!locId || !userLat || !userLng) return;
+
+            el.btn.disabled = true;
+            el.btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i> MENGHITUNG...';
+
+            fetch('/api/check-delivery', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                body: JSON.stringify({ location_id: locId, latitude: userLat, longitude: userLng })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.allowed) {
+                    currentFee = parseFloat(data.delivery_fee) || 0;
+                    el.btn.disabled = false;
+                    el.btn.innerHTML = 'PESAN SEKARANG <i class="fas fa-arrow-right ml-2"></i>';
+                } else {
+                    Swal.fire({
+                        icon: 'error', title: 'Kejauhan!', text: data.message,
+                        confirmButtonText: 'Ganti ke Pickup', confirmButtonColor: '#ED1C24'
+                    }).then((result) => { if (result.isConfirmed) el.orderTypePickup.click(); });
+                    currentFee = 0;
+                    el.btn.disabled = true;
+                }
+                updateSummary();
+            })
+            .catch(err => {
+                console.error(err);
+                el.btn.disabled = false;
+                el.btn.innerText = "ERROR KONEKSI";
+            });
+        }
+
+        // --- EXTRAS ---
+        window.openAddressBook = function() { document.getElementById('modalAddressBook').classList.remove('hidden'); };
+        window.selectAddress = function(addr) {
+            el.lblDisplay.innerText = addr.label;
+            el.addrDisplay.innerText = addr.address;
+            el.phoneDisplay.innerText = addr.phone;
+            el.inpLat.value = addr.latitude;
+            el.inpLng.value = addr.longitude;
+            el.inpAddr.value = addr.address;
+            document.getElementById('modalAddressBook').classList.add('hidden');
+            calculateTotal();
+        };
+
+        el.btnPromo.addEventListener('click', function() {
+            const code = el.promoCode.value;
+            if(!code) return Swal.fire('Eits!', 'Masukkan kode promo dulu.', 'warning');
+            const originalText = el.btnPromo.innerHTML;
+            el.btnPromo.innerHTML = '<i class="fas fa-spinner animate-spin"></i>';
+            fetch('/api/validate-promo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                body: JSON.stringify({ promo_code: code, subtotal: subtotal })
+            })
+            .then(res => res.json())
+            .then(data => {
+                el.btnPromo.innerHTML = originalText;
+                if(data.success) {
+                    currentDiscount = parseFloat(data.discount_amount) || 0;
+                    el.rowDisc.classList.remove('hidden');
+                    Swal.fire({ icon: 'success', title: 'Hore!', text: data.message, timer: 2000, showConfirmButton: false });
+                } else {
+                    currentDiscount = 0;
+                    el.rowDisc.classList.add('hidden');
+                    Swal.fire({ icon: 'error', title: 'Gagal', text: data.message });
+                }
+                updateSummary();
+            })
+            .catch(() => { el.btnPromo.innerHTML = originalText; Swal.fire('Error', 'Gagal cek promo.', 'error'); });
+        });
+
+        function updateSummary() {
+            const numSubtotal = parseFloat(subtotal) || 0;
+            const numFee      = parseFloat(currentFee) || 0;
+            const numDiscount = parseFloat(currentDiscount) || 0;
+            const total = (numSubtotal + numFee) - numDiscount;
+            const fmt = (num) => 'Rp ' + num.toLocaleString('id-ID');
+            el.fee.innerText = fmt(numFee);
+            el.txtDisc.innerText = '- ' + fmt(numDiscount);
+            el.total.innerText = fmt(total);
+            el.inpFee.value = numFee;
+            el.inpDiscount.value = numDiscount;
+            el.inpTotal.value = total;
+        }
+
+        if(el.inpLat.value && el.realSelect.value) {
+            el.realSelect.dispatchEvent(new Event('change'));
+        }
+    });
+    </script>
+</body>
+</html>

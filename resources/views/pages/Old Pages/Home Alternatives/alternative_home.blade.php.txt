@@ -1,0 +1,137 @@
+@extends('layouts.customer')
+
+@section('content')
+
+    {{-- 1. HERO SECTION: Gaya Premium dengan Font Figtree --}}
+    <div class="relative h-[600px] flex items-center justify-center overflow-hidden bg-brand-red">
+        <div class="absolute inset-0 z-0">
+            <img src="{{ asset('images/pizzabanner.jpg') }}" alt="Pizza Banner" class="w-full h-full object-cover opacity-30 blur-[1px] scale-105" loading="lazy">
+        </div>
+        <div class="absolute inset-0 z-10 bg-pizza-pattern opacity-20"></div>
+        <div class="absolute inset-0 z-20 bg-gradient-to-b from-brand-red/40 via-transparent to-black/70"></div>
+
+        <div class="relative z-30 text-center px-4">
+            <div class="inline-block mb-6 px-4 py-1 bg-white/10 backdrop-blur-md border border-white/20 rounded-full animate-fade-in-down">
+                <span class="text-[10px] font-black text-brand-kraft uppercase tracking-widest">Authentic Italian Flavor</span>
+            </div>
+            
+            {{-- Menggunakan font-sans (Figtree) tapi tetap Bold & Italic untuk gaya --}}
+            <h1 class="text-6xl md:text-8xl font-black mb-4 text-white drop-shadow-2xl animate-text-pop italic tracking-tighter">
+                PIZZA<span class="text-brand-kraft">BOXX</span>
+            </h1>
+            
+            <p class="text-xl md:text-2xl mb-10 font-bold text-white tracking-widest animate-fade-in-up uppercase">
+                GOOD PIZZA, <span class="bg-brand-kraft text-brand-red px-3 py-1 rotate-[-2deg] inline-block shadow-lg">GREAT PIZZA.</span>
+            </p>
+
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-5 animate-scale-up">
+                {{-- Button rounded-2xl (gaya baru) --}}
+                <a href="{{ route('menu.index') }}" class="group relative bg-white text-brand-red font-black py-4 px-12 rounded-2xl text-sm uppercase tracking-[0.2em] shadow-2xl hover:scale-105 transition-all overflow-hidden">
+                    <span class="relative z-10 flex items-center gap-2">
+                        <i class="fas fa-pizza-slice animate-bounce text-xs"></i> Pesan Sekarang
+                    </span>
+                    <div class="absolute inset-0 bg-brand-kraft translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                </a>
+            </div>
+
+            <div class="mt-12 flex flex-col items-center gap-3 opacity-90">
+                <div class="flex items-center gap-1 text-brand-kraft text-xl">
+                    <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+                </div>
+                <div class="text-white text-[10px] font-black uppercase tracking-[0.3em]">1,000+ Verified Reviews</div>
+            </div>
+        </div>
+
+        <svg class="absolute bottom-0 left-0 w-full h-20 z-40" viewBox="0 0 1440 80" fill="none" preserveAspectRatio="none">
+            <path d="M0,40 C360,120 1080,0 1440,40 L1440,80 L0,80 Z" fill="#fff"/>
+        </svg>
+    </div>
+
+    {{-- 2. FEATURES SECTION: Gaya Kartu Premium (Border Samping) --}}
+    <section class="py-24 bg-white text-center relative overflow-hidden">
+        <div class="mb-20 inline-block relative px-4">
+            <h2 class="text-4xl font-black text-gray-900 uppercase italic tracking-tight relative z-10">
+                Mengapa Pizza <span class="text-brand-red">Boxx?</span>
+            </h2>
+            <div class="absolute -bottom-2 left-0 w-full h-3 bg-brand-kraft/40 -z-0 rotate-[-1deg]"></div>
+        </div>
+
+        <div class="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-12">
+            <div class="group bg-white p-10 rounded-[2.5rem] shadow-pizza border-l-8 border-brand-red transition-all hover:-translate-y-2 text-left">
+                <div class="w-14 h-14 flex items-center justify-center rounded-2xl bg-brand-soft mb-8 group-hover:rotate-12 transition-transform">
+                    <i class="fas fa-bolt text-brand-red text-xl"></i>
+                </div>
+                <h3 class="text-xl font-black text-gray-900 mb-4 uppercase tracking-tight leading-none">Pengiriman Cepat</h3>
+                <p class="text-gray-500 text-sm leading-relaxed font-medium">Pizza panas sampai di pintu Anda sebelum rasa lapar Anda memuncak. Kami menjamin kesegaran di setiap kotak.</p>
+            </div>
+
+            <div class="group bg-white p-10 rounded-[2.5rem] shadow-pizza border-l-8 border-brand-red transition-all hover:-translate-y-2 text-left">
+                <div class="w-14 h-14 flex items-center justify-center rounded-2xl bg-brand-soft mb-8 group-hover:rotate-12 transition-transform">
+                    <i class="fas fa-leaf text-brand-red text-xl"></i>
+                </div>
+                <h3 class="text-xl font-black text-gray-900 mb-4 uppercase tracking-tight leading-none">Bahan Pilihan</h3>
+                <p class="text-gray-500 text-sm leading-relaxed font-medium">Hanya menggunakan keju mozzarella terbaik dan tomat segar yang dipetik langsung dari petani lokal kita.</p>
+            </div>
+
+            <div class="group bg-white p-10 rounded-[2.5rem] shadow-pizza border-l-8 border-brand-red transition-all hover:-translate-y-2 text-left">
+                <div class="w-14 h-14 flex items-center justify-center rounded-2xl bg-brand-soft mb-8 group-hover:rotate-12 transition-transform">
+                    <i class="fas fa-medal text-brand-red text-xl"></i>
+                </div>
+                <h3 class="text-xl font-black text-gray-900 mb-4 uppercase tracking-tight leading-none">Rasa Juara</h3>
+                <p class="text-gray-500 text-sm leading-relaxed font-medium">Resep rahasia adonan kami yang difermentasi 24 jam menghasilkan tekstur yang renyah namun lembut.</p>
+            </div>
+        </div>
+    </section>
+
+    {{-- 3. CTA SECTION: Premium Closing --}}
+    <section class="py-24 bg-gray-50 relative overflow-hidden border-t border-gray-100">
+        <div class="absolute inset-0 bg-pizza-pattern opacity-[0.04]"></div>
+        
+        <div class="relative z-10 text-center max-w-4xl mx-auto px-4">
+            <h2 class="text-4xl md:text-5xl font-black text-gray-900 mb-8 uppercase italic leading-tight tracking-tighter">
+                Siap Menemukan <br> <span class="text-brand-red underline decoration-brand-kraft decoration-8 underline-offset-4">Piza Favoritmu?</span>
+            </h2>
+            <p class="text-gray-500 mb-12 text-lg font-medium leading-relaxed">Bergabunglah dengan ribuan pecinta piza yang telah membuktikan kelezatan Pizza Boxx.</p>
+            
+            <a href="{{ route('menu.index') }}" class="inline-block bg-brand-red hover:bg-brand-dark text-white font-black py-5 px-14 rounded-2xl text-[11px] uppercase tracking-[0.3em] shadow-2xl shadow-red-200 transition-all hover:scale-105 active:scale-95">
+                Lihat Menu Lengkap <i class="fas fa-arrow-right ml-3"></i>
+            </a>
+        </div>
+    </section>
+
+    <div class="bg-white py-10 text-center">
+        <p class="text-[10px] font-black text-gray-300 uppercase tracking-[0.5em] opacity-60">
+            Good Pizza • Great Pizza • Pizza Boxx
+        </p>
+    </div>
+
+@endsection
+
+@push('styles')
+<style>
+    @keyframes textPop {
+        0% { transform: scale(0.95); opacity: 0; }
+        60% { transform: scale(1.05); opacity: 1; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+    .animate-text-pop { animation: textPop 0.8s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    
+    @keyframes fadeInDown {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in-down { animation: fadeInDown 0.8s ease-out forwards; }
+
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; animation-delay: 0.3s; }
+
+    @keyframes scaleUp {
+        from { opacity: 0; transform: scale(0.9); }
+        to { opacity: 1; transform: scale(1); }
+    }
+    .animate-scale-up { animation: scaleUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; animation-delay: 0.5s; }
+</style>
+@endpush

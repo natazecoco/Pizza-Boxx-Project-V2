@@ -17,6 +17,7 @@ class Order extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        'order_code',
         'user_id',
         'location_id',
         'customer_name',
@@ -28,6 +29,8 @@ class Order extends Model
         'status',
         'delivery_address',
         'delivery_notes',
+        'latitude',
+        'longitude',
         'qr_code_path',
         'pickup_pin',
         'is_qr_verified',

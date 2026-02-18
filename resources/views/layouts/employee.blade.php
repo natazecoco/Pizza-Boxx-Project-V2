@@ -36,7 +36,7 @@
         <button @click="sidebarOpen = true" class="text-gray-500 focus:outline-none p-2">
             <i class="fas fa-bars text-2xl"></i>
         </button>
-        <span class="ml-4 font-black text-red-600">PIZZA BOXX</span>
+        <span class="ml-4 font-black text-brand-red">PIZZA BOXX</span>
     </div>
 
     @include('partials.employee.sidebar')
@@ -59,27 +59,42 @@
             @yield('content')
         </main>
     </div>
+
+{{-- Scripts Stack --}}
     @stack('scripts')
-    @if(session('success'))
-        <script>
-            Swal.fire({
+
+    <script>
+        {{-- 1. Konfigurasi Global PizzaAlert untuk Pegawai --}}
+        const PizzaAlert = Swal.mixin({
+            customClass: {
+                confirmButton: 'bg-gray-900 text-white font-black uppercase italic px-8 py-4 rounded-2xl mx-2 hover:bg-brand-red transition-all text-[10px] tracking-[0.2em] shadow-xl',
+                cancelButton: 'bg-slate-200 text-gray-400 font-black uppercase italic px-8 py-4 rounded-2xl mx-2 hover:bg-gray-300 transition-all text-[10px] tracking-[0.2em]',
+                popup: 'rounded-[3rem] border-none shadow-2xl p-8',
+                title: 'font-black uppercase italic text-gray-900 tracking-tighter text-2xl mb-2',
+                htmlContainer: 'font-bold text-gray-500 text-[11px] uppercase tracking-widest'
+            },
+            buttonsStyling: false,
+            showClass: { popup: 'animate-fade-in-up' }
+        });
+
+        {{-- 2. Munculkan Alert Otomatis jika ada Session dari Controller --}}
+        @if(session('success'))
+            PizzaAlert.fire({
                 icon: 'success',
-                title: 'Berhasil!',
+                title: 'BERHASIL!',
                 text: "{{ session('success') }}",
-                timer: 3000,
+                timer: 2500,
                 showConfirmButton: false
             });
-        </script>
-    @endif
+        @endif
 
-    @if(session('error'))
-        <script>
-            Swal.fire({
+        @if(session('error'))
+            PizzaAlert.fire({
                 icon: 'error',
-                title: 'Waduh!',
+                title: 'WADUH!',
                 text: "{{ session('error') }}",
             });
-        </script>
-    @endif
+        @endif
+    </script>
 </body>
 </html>

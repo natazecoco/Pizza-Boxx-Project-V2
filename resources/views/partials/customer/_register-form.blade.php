@@ -1,53 +1,73 @@
-<form method="POST" action="{{ route('register') }}" class="space-y-2">
+<form method="POST" action="{{ route('register') }}" 
+    x-data="{ loading: false }" 
+    @submit="loading = true" 
+    class="space-y-4">
     @csrf
-    <div>
-        <label for="name" class="block text-sm font-semibold text-gray-700 mb-1">Nama Lengkap</label>
-        <div class="relative">
-            <span class="absolute inset-y-0 left-0 flex items-center pl-3">
-                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-            </span>
-            <input id="name" name="name" type="text" autocomplete="name" required
-                   class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all"
-                   placeholder="John Doe" value="{{ old('name') }}">
-        </div>
+
+    {{-- Nama --}}
+    <div class="group">
+        <label class="block text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-2 ml-1 group-focus-within:text-brand-red transition-colors">Nama Lengkap</label>
+        <input type="text" name="name" required value="{{ old('name') }}"
+               class="w-full px-5 py-4 bg-white border-2 {{ $errors->has('name') ? 'border-brand-red' : 'border-gray-200' }} rounded-xl focus:border-gray-900 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] outline-none font-bold text-gray-900 transition-all shadow-sm placeholder-gray-300 text-sm"
+               placeholder="Contoh: Budi Santoso">
+        @error('name')
+            <p class="text-[9px] font-black uppercase text-brand-red mt-2 ml-2 italic flex items-center gap-1">
+                <i class="fas fa-exclamation-circle"></i> {{ $message }}
+            </p>
+        @enderror
     </div>
-    <div>
-        <label for="email" class="block text-sm font-semibold text-gray-700 mb-1">Email</label>
-        <div class="relative">
-            <span class="absolute inset-y-0 left-0 flex items-center pl-3">
-                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"></path></svg>
-            </span>
-            <input id="email" name="email" type="email" autocomplete="email" required
-                   class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all"
-                   placeholder="anda@email.com" value="{{ old('email') }}">
-        </div>
+
+    {{-- Email --}}
+    <div class="group">
+        <label class="block text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-2 ml-1 group-focus-within:text-brand-red transition-colors">Email Address</label>
+        <input type="email" name="email" required value="{{ old('email') }}"
+               class="w-full px-5 py-4 bg-white border-2 {{ $errors->has('email') ? 'border-brand-red' : 'border-gray-200' }} rounded-xl focus:border-gray-900 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] outline-none font-bold text-gray-900 transition-all shadow-sm placeholder-gray-300 text-sm"
+               placeholder="nama@email.com">
+        @error('email')
+            <p class="text-[9px] font-black uppercase text-brand-red mt-2 ml-2 italic flex items-center gap-1">
+                <i class="fas fa-exclamation-circle"></i> {{ $message }}
+            </p>
+        @enderror
     </div>
-    <div>
-        <label for="password" class="block text-sm font-semibold text-gray-700 mb-1">Password</label>
-        <div class="relative">
-            <span class="absolute inset-y-0 left-0 flex items-center pl-3">
-                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-            </span>
-            <input id="password" name="password" type="password" autocomplete="new-password" required
-                   class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all"
+
+    {{-- Password Grid --}}
+    <div class="grid grid-cols-2 gap-4">
+        <div class="group">
+            <label class="block text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-2 ml-1 group-focus-within:text-brand-red transition-colors">Password</label>
+            <input type="password" name="password" required
+                   class="w-full px-5 py-4 bg-white border-2 {{ $errors->has('password') ? 'border-brand-red' : 'border-gray-200' }} rounded-xl focus:border-gray-900 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] outline-none font-bold text-gray-900 transition-all shadow-sm placeholder-gray-300 text-sm"
                    placeholder="••••••••">
         </div>
-    </div>
-    <div>
-        <label for="password_confirmation" class="block text-sm font-semibold text-gray-700 mb-1">Konfirmasi Password</label>
-        <div class="relative">
-            <span class="absolute inset-y-0 left-0 flex items-center pl-3">
-               <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-            </span>
-            <input id="password_confirmation" name="password_confirmation" type="password" autocomplete="new-password" required
-                   class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all"
+        <div class="group">
+            <label class="block text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-2 ml-1 group-focus-within:text-brand-red transition-colors">Konfirmasi</label>
+            <input type="password" name="password_confirmation" required
+                   class="w-full px-5 py-4 bg-white border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] outline-none font-bold text-gray-900 transition-all shadow-sm placeholder-gray-300 text-sm"
                    placeholder="••••••••">
         </div>
+        @error('password')
+            <div class="col-span-2 text-[9px] font-black uppercase text-brand-red ml-2 italic flex items-center gap-1">
+                <i class="fas fa-exclamation-circle"></i> {{ $message }}
+            </div>
+        @enderror
     </div>
-    <div>
-        <button type="submit"
-                class="w-full flex justify-center py-2 px-4 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5">
-            Daftar
-        </button>
-    </div>
+
+    {{-- Submit Button --}}
+    <button type="submit" 
+            :disabled="loading"
+            class="w-full bg-brand-red hover:bg-gray-900 text-white font-black py-4 rounded-xl uppercase tracking-[0.2em] text-xs shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none border-2 border-transparent mt-4">
+        
+        <template x-if="loading">
+            <div class="flex items-center gap-2">
+                <i class="fas fa-circle-notch animate-spin"></i>
+                <span>MEMBUAT AKUN...</span>
+            </div>
+        </template>
+
+        <template x-if="!loading">
+            <div class="flex items-center gap-2">
+                <span>DAFTAR SEKARANG</span>
+                <i class="fas fa-user-plus"></i>
+            </div>
+        </template>
+    </button>
 </form>

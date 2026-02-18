@@ -1,0 +1,80 @@
+<?php
+
+namespace App\Http\Controllers\Public;
+
+use Illuminate\Http\Request;
+use App\Models\Category;
+use App\Models\Product;
+use App\Models\ProductOption;
+use App\Models\Location; 
+use App\Http\Controllers\Controller;
+
+class MenuController extends Controller
+{
+    public function index(Request $request)
+    {
+        $categories = Category::all();
+        $selectedCategory = $request->input('category');
+        
+        // Ambil koordinat dari request (dikirim lewat Javascript/URL)
+        $userLat = $request->input('lat');
+        $userLng = $request->input('lng');
+
+        $productsQuery = Product::with('category');
+        if ($selectedCategory) {
+            $productsQuery->where('category_id', $selectedCategory);
+        }
+        $products = $productsQuery->where('is_available', true)->get();
+
+        $allLocations = Location::all();
+        $nearestBranch = null;
+        $minDistance = INF;
+
+        if ($userLat && $userLng) {
+            // Logika mencari yang terdekat
+            foreach ($allLocations as $location) {
+                $distance = $this->calculateDistance($userLat, $userLng, $location->latitude, $location->longitude);
+                if ($distance < $minDistance) {
+                    $minDistance = $distance;
+                    $nearestBranch = $location;
+                }
+            }
+        } else {
+            // Jika user belum share lokasi, ambil cabang default (pertama)
+            $nearestBranch = $allLocations->first();
+        }
+
+        $branchLocationData = null;
+        if ($nearestBranch) {
+            $branchLocationData = [
+                'id' => $nearestBranch->id,
+                'name' => $nearestBranch->name,
+                'latitude' => (float)$nearestBranch->latitude,
+                'longitude' => (float)$nearestBranch->longitude,
+                'radius_km' => (int)($nearestBranch->delivery_radius_km ?? 5),
+                'distance' => $userLat ? round($minDistance, 2) : null,
+            ];
+        }
+
+        return view('pages.Front.menu', compact('categories', 'products', 'selectedCategory', 'branchLocationData'));
+    }
+
+    // Rumus Haversine seperti di CheckoutController
+    private function calculateDistance($lat1, $lon1, $lat2, $lon2)
+    {
+        $R = 6371; 
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+        $a = sin($dLat/2) ** 2 + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon/2) ** 2;
+        return $R * (2 * atan2(sqrt($a), sqrt(1-$a)));
+    }
+
+    public function show(Product $product)
+    {
+        $product->load(['options', 'addons']);
+        $universalCrusts = ProductOption::where('type', 'Pinggiran')->get();
+
+        // Jalur ini sudah benar
+        return view('pages.Front.product-detail', compact('product', 'universalCrusts'));
+    }
+}

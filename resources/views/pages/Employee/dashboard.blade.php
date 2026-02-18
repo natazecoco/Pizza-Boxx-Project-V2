@@ -38,7 +38,7 @@
                     <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Antrean Masak</p>
                     <h3 class="text-2xl font-black text-gray-800 mt-1">{{ $pendingOrdersCount }}</h3>
                 </div>
-                <div class="bg-red-100 p-3 rounded-xl text-red-600">
+                <div class="bg-red-100 p-3 rounded-xl text-brand-red">
                     <i class="fas fa-fire text-xl"></i>
                 </div>
             </div>
@@ -61,7 +61,7 @@
         <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-lg font-bold text-gray-800 italic underline decoration-red-500 decoration-4">Pesanan Terbaru</h3>
-                <a href="{{ route('pegawai.orders.index') }}" class="text-xs font-bold text-red-600 hover:underline">Lihat Semua →</a>
+                <a href="{{ route('pegawai.orders.index') }}" class="text-xs font-bold text-brand-red hover:underline">Lihat Semua →</a>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left">
@@ -94,7 +94,7 @@
             </div>
         </div>
 
-        <div class="bg-red-600 rounded-3xl p-8 text-white shadow-xl shadow-red-200">
+        <div class="bg-brand-red rounded-3xl p-8 text-white shadow-xl shadow-red-200">
             <h3 class="text-xl font-bold mb-4 italic">Butuh Bantuan?</h3>
             <p class="text-sm opacity-80 mb-8 leading-relaxed">Kelola pesanan dengan cepat untuk menjaga kepuasan pelanggan Pizza Boxx.</p>
             

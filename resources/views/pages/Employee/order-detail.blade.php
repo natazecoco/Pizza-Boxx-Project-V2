@@ -3,7 +3,7 @@
 @section('content')
 <div class="container mx-auto py-10 px-2 md:px-0">
     <div class="mb-6">
-        <a href="{{ route('pegawai.dashboard') }}" class="inline-flex items-center text-red-600 hover:text-red-800 font-semibold transition-colors duration-200">
+        <a href="{{ route('pegawai.dashboard') }}" class="inline-flex items-center text-brand-red hover:text-red-800 font-semibold transition-colors duration-200">
             <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
             Kembali ke Dashboard
         </a>
@@ -43,7 +43,7 @@
                     </form>
                 </div>
                 <div class="mb-2"><span class="font-semibold">Metode Pembayaran:</span> {{ $order->payment_method }}</div>
-                <div class="mb-2"><span class="font-semibold">Total:</span> <span class="text-lg font-bold text-red-600">Rp{{ number_format($order->total_amount,0,',','.') }}</span></div>
+                <div class="mb-2"><span class="font-semibold">Total:</span> <span class="text-lg font-bold text-brand-red">Rp{{ number_format($order->total_amount,0,',','.') }}</span></div>
             </div>
         </div>
         <h3 class="text-lg font-semibold mt-6 mb-2">Item Pesanan</h3>

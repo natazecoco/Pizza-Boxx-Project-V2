@@ -3,7 +3,7 @@
 @section('content')
 <div class="container mx-auto py-8 px-4 max-w-4xl">
     <div class="flex justify-between items-center mb-6 no-print">
-        <a href="{{ route('pegawai.orders.index') }}" class="text-gray-600 hover:text-red-600 font-bold flex items-center gap-2 transition-colors">
+        <a href="{{ route('pegawai.orders.index') }}" class="text-gray-600 hover:text-brand-red font-bold flex items-center gap-2 transition-colors">
             <i class="fas fa-arrow-left"></i> Kembali ke Dashboard
         </a>
         <div class="flex gap-3">
@@ -26,7 +26,7 @@
                     $formattedPhone = $cleanPhone;
                 }
 
-                // 4. Siapkan pesan otomatis (opsional)
+                // 4. Siapkan pesan otomatis (Logic punya kamu)
                 $statusPesan = match($order->status) {
                     'ready_for_pickup'   => 'sudah siap diambil di toko!',
                     'ready_for_delivery' => 'sudah siap dan akan segera diantar oleh kurir kami!',
@@ -42,14 +42,11 @@
             class="bg-green-500 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-green-600 transition-all">
                 <i class="fab fa-whatsapp"></i> Chat Pelanggan
             </a>
-            <!-- <a href="https://wa.me/{{ str_replace('0', '62', $order->customer_phone) }}" target="_blank" class="bg-green-500 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md">
-                <i class="fab fa-whatsapp"></i> Chat Pelanggan
-            </a> -->
         </div>
     </div>
 
     <div id="printable-area" class="bg-white shadow-xl overflow-hidden border border-gray-100">
-        <div class="bg-red-600 p-8 text-white flex justify-between items-center">
+        <div class="bg-brand-red p-8 text-white flex justify-between items-center">
             <div>
                 <h1 class="text-3xl font-black italic tracking-tighter">PIZZA BOXX</h1>
                 <p class="text-sm opacity-80 uppercase tracking-widest mt-1">Order Invoice</p>
@@ -77,7 +74,7 @@
                 <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
                     <div class="flex justify-between mb-2">
                         <span class="text-sm text-gray-500">Tipe Pesanan:</span>
-                        <span class="text-sm font-bold uppercase text-red-600">{{ $order->order_type }}</span>
+                        <span class="text-sm font-bold uppercase text-brand-red">{{ $order->order_type }}</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-sm text-gray-500">Status Saat Ini:</span>
@@ -98,7 +95,7 @@
                     <tbody class="divide-y divide-gray-100">
                         @foreach($order->orderItems as $item)
                         <tr class="hover:bg-gray-50 transition-colors group">
-                            {{-- Tambah Checkbox untuk menandai piza yang sudah dibuat --}}
+                            {{-- Tambah Checkbox untuk menandai pizza yang sudah dibuat --}}
                             <td class="py-5 no-print">
                                 <input type="checkbox" class="w-6 h-6 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer">
                             </td>
@@ -111,7 +108,9 @@
                                         @endphp
                                         @foreach($options as $opt)
                                             <span class="text-[10px] bg-yellow-100 text-orange-800 px-2 py-0.5 rounded-md font-black border border-orange-200 uppercase">
-                                                {{ trim($opt) }}
+                                                {{-- INI PERBAIKANNYA --}}
+                                                {{-- Cek jika $opt adalah array (format baru) atau string (format lama) --}}
+                                                {{ is_array($opt) ? ($opt['name'] ?? '-') : trim($opt) }}
                                             </span>
                                         @endforeach
                                     </div>
@@ -125,7 +124,7 @@
                     <tfoot>
                         <tr class="border-t-2 border-gray-200">
                             <td colspan="2" class="py-6 text-right font-bold text-gray-500">TOTAL PEMBAYARAN:</td>
-                            <td class="py-6 text-right text-2xl font-black text-red-600">Rp{{ number_format($order->total_amount) }}</td>
+                            <td class="py-6 text-right text-2xl font-black text-brand-red">Rp{{ number_format($order->total_amount) }}</td>
                         </tr>
                     </tfoot>
                 </table>
@@ -133,6 +132,7 @@
         </div>
     </div>
     
+    {{-- BAGIAN BAWAH KARTU OPERASIONAL (Update Status) --}}
     <div class="bg-white rounded-2xl shadow-lg p-8 mt-8 border-l-4 border-blue-500 no-print">
         <h3 class="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2">
             <i class="fas fa-edit text-blue-600"></i> Perbarui Operasional Pesanan
@@ -148,7 +148,6 @@
                     'color'  => 'bg-green-600',
                     'icon'   => 'fa-pizza-slice'
                 ],
-                // STATUS BARU: Jika sudah siap diambil, arahkan ke Verifikasi PIN
                 'ready_for_pickup' => [
                     'url'    => route('pegawai.qr.verify.form', ['order_id' => $order->id]),
                     'label'  => 'VERIFIKASI PIN PELANGGAN',
@@ -163,13 +162,11 @@
         @if($nextAction)
         <div class="mb-4 no-print">
             @if(isset($nextAction['url']))
-                {{-- Jika ini tombol Verifikasi PIN --}}
                 <a href="{{ $nextAction['url'] }}" class="w-full {{ $nextAction['color'] }} text-white py-6 rounded-2xl font-black text-2xl shadow-xl hover:scale-[1.01] transition-all flex items-center justify-center gap-4">
                     <i class="fas {{ $nextAction['icon'] }} animate-bounce"></i>
                     {{ $nextAction['label'] }}
                 </a>
             @else
-                {{-- Jika ini tombol Update Status biasa --}}
                 <form action="{{ route('pegawai.orders.update-status', $order->id) }}" method="POST">
                     @csrf
                     <input type="hidden" name="status" value="{{ $nextAction['status'] }}">
@@ -196,10 +193,8 @@
                             <option value="ready_for_delivery" {{ $order->status == 'ready_for_delivery' ? 'selected' : '' }}>Siap Diantar</option>
                             <option value="on_delivery" {{ $order->status == 'on_delivery' ? 'selected' : '' }}>Sedang Diantar</option>
                             <option value="delivered" {{ $order->status == 'delivered' ? 'selected' : '' }}>Sudah Sampai (Delivered)</option>
-                            {{-- Selesai untuk delivery biarkan lewat konfirmasi pelanggan saja agar aman --}}
                         @else
                             <option value="ready_for_pickup" {{ $order->status == 'ready_for_pickup' ? 'selected' : '' }}>Siap Diambil</option>
-                            {{-- Status 'Completed' DIHAPUS dari sini untuk Pickup karena WAJIB VERIFIKASI PIN --}}
                         @endif
 
                         <option value="cancelled" {{ $order->status == 'cancelled' ? 'selected' : '' }}>Batalkan Pesanan</option>
@@ -212,16 +207,17 @@
         </form>
     </div>
 
+    {{-- RIWAYAT STATUS --}}
     <div class="bg-white rounded-2xl shadow-lg p-8 mt-8 border border-gray-100 no-print">
         <h3 class="text-lg font-bold text-gray-800 mb-8 flex items-center gap-2">
-            <i class="fas fa-history text-red-600"></i> Riwayat Status Pesanan
+            <i class="fas fa-history text-brand-red"></i> Riwayat Status Pesanan
         </h3>
 
         <div class="relative">
             <div class="absolute left-3 top-0 h-full w-0.5 bg-gray-100"></div>
 
             <div class="relative pl-10 mb-8">
-                <span class="absolute left-0 top-1 bg-red-600 w-6 h-6 rounded-full border-4 border-white shadow-sm flex items-center justify-center">
+                <span class="absolute left-0 top-1 bg-brand-red w-6 h-6 rounded-full border-4 border-white shadow-sm flex items-center justify-center">
                     <i class="fas fa-check text-[10px] text-white"></i>
                 </span>
                 <p class="text-sm font-bold text-gray-800">Pesanan Diterima</p>
@@ -234,7 +230,6 @@
                     <i class="fas fa-pizza-slice text-[10px] text-white"></i>
                 </span>
                 <p class="text-sm font-bold text-gray-800">
-                    {{-- Logic Dinamis: Teks berubah sesuai status --}}
                     @if($order->status == 'ready_for_pickup')
                         Pizza Siap Diambil
                     @elseif($order->status == 'ready_for_delivery')
@@ -281,14 +276,5 @@
         /* Hilangkan elemen yang tidak perlu di dalam struk */
         .no-print { display: none !important; }
     }
-
-    /* @media print {
-        .no-print, .sidebar, nav, button { display: none !important; }
-        body { background: white !important; margin: 0; padding: 0; }
-        .md\:ml-64 { margin-left: 0 !important; }
-        .container { max-width: 100% !important; width: 100% !important; box-shadow: none !important; }
-        .bg-white { box-shadow: none !important; border: none !important; }
-        @page { margin: 1.5cm; }
-    } */
 </style>
 @endsection

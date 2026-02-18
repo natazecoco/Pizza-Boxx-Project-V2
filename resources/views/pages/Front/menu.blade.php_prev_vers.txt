@@ -1,0 +1,185 @@
+@extends('layouts.customer')
+
+@section('content')
+    {{-- Toast Notification --}}
+    @if(session('success'))
+    <div x-data="{ show: true }" x-init="setTimeout(() => show = false, 3000)" x-show="show" 
+         class="fixed top-24 right-6 z-[100] animate-fade-in-down">
+        <div class="bg-gray-900 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 border-l-4 border-brand-red">
+            <i class="fas fa-check-circle text-brand-kraft text-xl"></i>
+            <p class="text-xs font-black uppercase tracking-widest">{{ session('success') }}</p>
+        </div>
+    </div>
+    @endif
+
+    {{-- 1. HERO SECTION (Identik dengan About) --}}
+    <section class="bg-brand-red pt-32 pb-20 relative overflow-hidden">
+        <div class="absolute inset-0 bg-pizza-pattern opacity-10"></div>
+        <div class="container mx-auto px-6 lg:px-12 relative z-10 text-center">
+            <span class="text-brand-kraft font-black text-xs uppercase tracking-widest">Our Best Recipe</span>
+            <h1 class="text-5xl md:text-7xl lg:text-8xl font-black text-white italic uppercase tracking-tighter leading-none mt-4">
+                PILIH <span class="text-brand-kraft">PIZZA-MU</span>
+            </h1>
+        </div>
+    </section>
+
+    {{-- 2. CONTENT WRAPPER (Rounded Top identik dengan About) --}}
+    <section class="py-24 bg-white relative z-20 -mt-10 rounded-t-[3rem] lg:rounded-t-[5rem] min-h-screen">
+        <div class="container mx-auto px-6 lg:px-12">
+            
+            {{-- 2.1 DELIVERY STATUS: Modern Bento Box --}}
+            <div id="delivery-status-message" class="bg-brand-kraft rounded-[2rem] p-6 mb-16 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4 border-b-4 border-brand-red/20 transition-all duration-500 max-w-4xl mx-auto">
+                <div class="flex items-center gap-4 text-center md:text-left">
+                    <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-inner animate-pulse">
+                        <i class="fas fa-map-marker-alt text-brand-red text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black uppercase tracking-widest text-brand-red opacity-70">Status Pengantaran</p>
+                        <p class="text-sm font-bold text-gray-900 uppercase italic leading-none mt-1">Sedang melacak lokasi Anda...</p>
+                    </div>
+                </div>
+                <div class="h-2 w-32 bg-white/50 rounded-full overflow-hidden">
+                    <div class="h-full bg-brand-red animate-progress"></div>
+                </div>
+            </div>
+
+            {{-- 2.2 CATEGORY FILTER: App-Style Pills --}}
+            <div class="sticky top-24 z-40 bg-white/80 backdrop-blur-md py-4 mb-16 -mx-4 px-4 rounded-3xl border border-gray-50 shadow-sm">
+                <div class="flex gap-3 overflow-x-auto pb-2 no-scrollbar lg:justify-center">
+                    <a href="{{ route('menu.index') }}"
+                       class="px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all whitespace-nowrap
+                       {{ !request()->has('category') ? 'bg-brand-red text-white shadow-xl scale-105' : 'bg-slate-50 text-gray-400 border border-gray-100 hover:text-brand-red' }}">
+                        Semua Menu
+                    </a>
+                    @foreach($categories as $category)
+                        <a href="{{ route('menu.index', ['category' => $category->id]) }}"
+                           class="px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all whitespace-nowrap
+                           {{ request()->input('category') == $category->id ? 'bg-brand-red text-white shadow-xl scale-105' : 'bg-slate-50 text-gray-400 border border-gray-100 hover:text-brand-red' }}">
+                            {{ $category->name }}
+                        </a>
+                    @endforeach
+                </div>
+            </div>
+
+            {{-- 2.3 PRODUCT GRID --}}
+            <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-8">
+                @forelse($products as $product)
+                    <div class="group bg-slate-50 rounded-[2.5rem] p-4 lg:p-6 transition-all hover:bg-white hover:shadow-2xl hover:-translate-y-2 border border-transparent hover:border-gray-100 flex flex-col">
+                        
+                        {{-- Product Image --}}
+                        <div class="relative h-40 md:h-56 mb-6 overflow-hidden rounded-[2rem] shadow-inner bg-white">
+                            @if($product->image_path)
+                                <img src="{{ asset('storage/' . $product->image_path) }}" 
+                                     alt="{{ $product->name }}"
+                                     class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                            @else
+                                <div class="w-full h-full bg-gray-200 flex items-center justify-center italic text-gray-400 text-xs">No Image</div>
+                            @endif
+                            
+                            @if($product->is_best_seller)
+                                <div class="absolute top-3 left-3 bg-brand-red text-white text-[8px] lg:text-[10px] font-black px-3 py-1 rounded-full italic shadow-lg uppercase">
+                                    Best Seller
+                                </div>
+                            @endif
+                        </div>
+
+                        {{-- Product Info --}}
+                        <div class="px-2 flex flex-col flex-grow">
+                            <h3 class="text-sm lg:text-xl font-black text-gray-900 uppercase italic leading-tight group-hover:text-brand-red transition-colors mb-2">
+                                {{ $product->name }}
+                            </h3>
+                            
+                            <p class="text-gray-500 text-[10px] lg:text-xs font-medium mb-6 line-clamp-2 leading-relaxed">
+                                {{ $product->description ?? 'Nikmati kelezatan pizza spesial dengan bahan premium khas Pizza Boxx.' }}
+                            </p>
+
+                            <div class="mt-auto flex items-center justify-between">
+                                <div class="flex flex-col">
+                                    <span class="text-gray-400 text-[8px] font-black uppercase tracking-widest leading-none">Mulai dari</span>
+                                    <span class="text-brand-red font-black text-sm lg:text-xl italic">
+                                        Rp {{ number_format($product->base_price, 0, ',', '.') }}
+                                    </span>
+                                </div>
+
+                                @if($product->is_available)
+                                    <a href="{{ route('menu.show', $product->id) }}" 
+                                       class="w-10 h-10 lg:w-12 lg:h-12 bg-white shadow-lg rounded-2xl flex items-center justify-center text-brand-red hover:bg-brand-red hover:text-white transition-all transform active:scale-90 border border-gray-50">
+                                        <i class="fas fa-plus text-xs"></i>
+                                    </a>
+                                @else
+                                    <span class="text-[8px] font-black bg-gray-200 text-gray-400 px-2 py-1 rounded-lg uppercase">Habis</span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <div class="col-span-full py-32 text-center bg-slate-50 rounded-[3rem] border-2 border-dashed border-gray-200">
+                        <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
+                            <i class="fas fa-pizza-slice text-gray-200 text-3xl"></i>
+                        </div>
+                        <p class="text-gray-400 font-black uppercase tracking-widest text-xs">Menu tidak ditemukan dalam kategori ini.</p>
+                    </div>
+                @endforelse
+            </div>
+        </div>
+    </section>
+
+    @push('styles')
+    <style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        @keyframes progress { 0% { width: 0%; } 100% { width: 100%; } }
+        .animate-progress { animation: progress 1.5s ease-in-out infinite; }
+        .animate-fade-in-down { animation: fadeInDown 0.5s ease-out; }
+        @keyframes fadeInDown {
+            0% { opacity: 0; transform: translateY(-20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+    @endpush
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const branchLocationData = @json($branchLocationData);
+            const statusBox = document.getElementById('delivery-status-message');
+
+            function updateStatusUI(icon, title, message, colorType) {
+                const colors = {
+                    green: { bg: 'bg-emerald-100', border: 'border-emerald-500', text: 'text-emerald-600' },
+                    yellow: { bg: 'bg-amber-100', border: 'border-amber-500', text: 'text-amber-600' },
+                    red: { bg: 'bg-red-100', border: 'border-red-500', text: 'text-brand-red' }
+                };
+                
+                const c = colors[colorType] || colors.yellow;
+
+                statusBox.className = `${c.bg} rounded-[2rem] p-6 mb-16 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4 border-l-8 ${c.border} transition-all duration-500 max-w-4xl mx-auto`;
+                statusBox.innerHTML = `
+                    <div class="flex items-center gap-4 text-center md:text-left">
+                        <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm">
+                            <i class="fas ${icon} ${c.text} text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-black uppercase tracking-widest ${c.text} opacity-70">${title}</p>
+                            <p class="text-sm font-bold text-gray-900 uppercase italic leading-none mt-1">${message}</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        if (branchLocationData) {
+                            updateStatusUI('fa-check-circle', 'Lokasi Terdeteksi', `Outlet terdekat: ${branchLocationData.name}. Anda siap memesan!`, 'green');
+                        } else {
+                            updateStatusUI('fa-info-circle', 'Lokasi Ditemukan', 'Silakan pilih cabang untuk melihat ketersediaan menu.', 'yellow');
+                        }
+                    },
+                    (error) => {
+                        updateStatusUI('fa-exclamation-triangle', 'GPS Tidak Aktif', 'Aktifkan GPS untuk mendapatkan estimasi ongkir & outlet terdekat.', 'red');
+                    }
+                );
+            }
+        });
+    </script>
+@endsection

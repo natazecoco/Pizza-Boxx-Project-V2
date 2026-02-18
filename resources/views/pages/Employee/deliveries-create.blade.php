@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container mx-auto py-10 px-2 md:px-0">
-    <h1 class="text-3xl font-extrabold mb-8 text-red-600 tracking-tight drop-shadow-lg">Buat Pengantaran</h1>
+    <h1 class="text-3xl font-extrabold mb-8 text-brand-red tracking-tight drop-shadow-lg">Buat Pengantaran</h1>
     <a href="{{ route('pegawai.deliveries.index') }}" class="inline-block mb-6 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded shadow font-semibold transition-all duration-200"><i class="fa fa-arrow-left mr-2"></i>Kembali</a>
     <form action="{{ route('pegawai.deliveries.store') }}" method="POST" class="bg-white rounded-2xl shadow-xl p-8 max-w-xl mx-auto">
         @csrf

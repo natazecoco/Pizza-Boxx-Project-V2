@@ -2,16 +2,19 @@
 
 namespace App\Http\Controllers\Customer;
 
-use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use App\Models\Location;
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Models\Location;
+use App\Models\Product;
+use App\Models\ProductOption;
 use App\Models\Promo;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log; // Import Log facade
-use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Str;
 
 class CheckoutController extends Controller
 {
@@ -22,15 +25,42 @@ class CheckoutController extends Controller
     {
         $cart = session()->get('cart', []);
 
+        // 1. Cek Keranjang Kosong
         if (empty($cart)) {
             return redirect()->route('cart.index')->with('error', 'Keranjang belanja Anda kosong, tidak bisa checkout.');
         }
 
-        $cartTotal = array_sum(array_column($cart, 'total_price'));
-        $locations = Location::all();
+        // 2. Ambil User saat ini
         $user = auth()->user();
 
-        return view('pages.checkout.index', compact('cart', 'cartTotal', 'locations', 'user'));
+        // [SAFETY CHECK] Pastikan user benar-benar ada.
+        // Walaupun di web.php sudah ada middleware, ini perlindungan ganda.
+        if (!$user) {
+            return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu.');
+        }
+
+        $cartTotal = array_sum(array_column($cart, 'total_price'));
+        $locations = Location::all();
+
+        // 3. Ambil Alamat dengan Aman
+        // Kita gunakan $user->addresses. Jika user baru dan belum punya relasi, 
+        // kita default-kan ke collection kosong agar tidak error di View.
+        $addresses = $user->addresses ?? collect(); 
+        
+        // 4. Tentukan Alamat Utama (Primary)
+        // Logikanya: Cari yang 'is_primary' = 1. 
+        // Jika tidak ada (user lupa set), ambil alamat pertama yang ditemukan.
+        // Jika tidak punya alamat sama sekali, hasilnya null (aman).
+        $primaryAddress = $addresses->where('is_primary', true)->first() ?? $addresses->first();
+
+        return view('pages.checkout.index', compact(
+            'cart', 
+            'cartTotal', 
+            'locations', 
+            'user', 
+            'addresses',
+            'primaryAddress'
+        ));
     }
 
     /**
@@ -53,7 +83,6 @@ class CheckoutController extends Controller
             $location->longitude
         );
 
-        // Gunakan nama kolom sesuai database kamu (delivery_radius_km atau delivery_radius)
         if ($distance > $location->delivery_radius_km) {
             return response()->json([
                 'allowed' => false,
@@ -94,9 +123,10 @@ class CheckoutController extends Controller
         $cart = session()->get('cart', []);
 
         if (empty($cart)) {
-            return redirect()->route('cart.index')->with('error', 'Keranjang belanja Anda kosong, tidak bisa checkout.');
+            return redirect()->route('cart.index')->with('error', 'Keranjang belanja kosong.');
         }
 
+        // UPDATE VALIDASI: Tambahkan latitude & longitude ke list
         $validatedData = $request->validate([
             'customer_name' => 'required|string|max:255',
             'customer_email' => 'nullable|email|max:255',
@@ -105,6 +135,8 @@ class CheckoutController extends Controller
             'payment_method' => 'required|in:online,cash_on_delivery,card_on_pickup,cash_on_pickup',
             'location_id' => 'required|exists:locations,id',
             'delivery_address' => 'required_if:order_type,delivery|nullable|string|max:500',
+            'latitude' => 'required_if:order_type,delivery|nullable|numeric', // Tambah ini
+            'longitude' => 'required_if:order_type,delivery|nullable|numeric', // Tambah ini
             'delivery_notes' => 'nullable|string|max:500',
             'promo_code' => 'nullable|string|exists:promos,code',
             'subtotal_amount' => 'required|numeric|min:0',
@@ -113,34 +145,52 @@ class CheckoutController extends Controller
             'total_amount' => 'required|numeric|min:0',
         ]);
 
-        // Pastikan kita menangkap koordinat dari form
-        $latitude = $request->input('latitude');
-        $longitude = $request->input('longitude');
+        $store = Location::findOrFail($validatedData['location_id']);
 
+        // Validasi Jarak Sisi Server
         if ($validatedData['order_type'] === 'delivery') {
-            $store = Location::find($validatedData['location_id']);
-            
-            // Hitung ulang jarak di sisi server (PHP)
-            $earthRadius = 6371; // Radius bumi dalam KM
-            $dLat = deg2rad($store->latitude - $latitude);
-            $dLon = deg2rad($store->longitude - $longitude);
-            $a = sin($dLat/2) * sin($dLat/2) + cos(deg2rad($latitude)) * cos(deg2rad($store->latitude)) * sin($dLon/2) * sin($dLon/2);
-            $c = 2 * atan2(sqrt($a), sqrt(1-$a));
-            $distance = $earthRadius * $c;
+            $distance = $this->haversine(
+                $validatedData['latitude'], 
+                $validatedData['longitude'], 
+                $store->latitude, 
+                $store->longitude
+            );
 
-            if ($distance > $store->delivery_radius_km) { 
-                return redirect()->back()->withInput()->with('error', 'Maaf, lokasi Anda berada di luar radius pengantaran cabang ini ('.round($distance, 2).' km).');
+            if ($distance > $store->delivery_radius_km) {
+                return redirect()->back()->withInput()->with('error', 'Maaf, lokasi Anda di luar radius pengantaran cabang ini.');
             }
         }
 
         DB::beginTransaction();
-
         try {
             $recalculatedSubtotal = 0;
+
             foreach ($cart as $item) {
-                $recalculatedSubtotal += $item['price_per_unit'] * $item['quantity'];
+                // Hitung ulang harga item berdasarkan data di database
+                $product = Product::findOrFail($item['product_id']);
+                $itemPrice = $product->base_price;
+
+                // Cek harga Size Option
+                if (isset($item['size_option']['id'])) {
+                    $itemPrice += ProductOption::find($item['size_option']['id'])->price_modifier;
+                }
+
+                // Cek harga Crust Option
+                if (isset($item['crust_option']['id'])) {
+                    $itemPrice += ProductOption::find($item['crust_option']['id'])->price_modifier;
+                }
+
+                // Cek harga Addons
+                if (!empty($item['addons'])) {
+                    foreach ($item['addons'] as $addonItem) {
+                        $itemPrice += ProductAddon::find($addonItem['id'])->price;
+                    }
+                }
+
+                $recalculatedSubtotal += ($itemPrice * $item['quantity']);
             }
 
+            // Hitung diskon jika ada kode promo Sisi Server
             $discountAmount = 0;
             $promoId = null;
             if (!empty($validatedData['promo_code'])) {
@@ -172,9 +222,11 @@ class CheckoutController extends Controller
                 }
             }
 
+            // Validasi ulang total akhir
             $deliveryFee = $validatedData['delivery_fee'];
             $recalculatedTotal = $recalculatedSubtotal - $discountAmount + $deliveryFee;
 
+            // Validasi kesesuaian harga sisi server dan client
             if (abs($recalculatedSubtotal - $validatedData['subtotal_amount']) > 0.01 ||
                 abs($discountAmount - $validatedData['discount_amount']) > 0.01 ||
                 abs($recalculatedTotal - $validatedData['total_amount']) > 0.01) {
@@ -182,31 +234,54 @@ class CheckoutController extends Controller
                 return redirect()->back()->withInput()->with('error', 'Terjadi kesalahan perhitungan harga. Mohon coba lagi.');
             }
 
+            // Generate Order Code
+            // 1. Pecah string berdasarkan koma
+            $parts = explode(',', $store->name);
+
+            // 2. Ambil bagian kedua (index 1), bersihkan spasi, lalu ambil 3 huruf
+            if (count($parts) > 1) {
+                $branchNameOnly = trim($parts[1]); // Hasilnya: "Sukahati Cibinong"
+                $branchInitial = strtoupper(substr($branchNameOnly, 0, 3));
+            } else {
+                // Fallback jika user lupa kasih koma di database
+                $branchNameOnly = trim(str_ireplace('Pizza Boxx', '', $store->name));
+                $branchInitial = strtoupper(substr($branchNameOnly, 0, 3));
+            }
+
+            // 3. Jaga-jaga kalau masih kosong
+            if (empty($branchInitial)) {
+                $branchInitial = 'PBX';
+            }
+
+            // 4. Susun Order Code
+            $orderCode = 'PBX-' . $branchInitial . '-' . now()->format('dmy') . '-' . strtoupper(Str::random(4));
+
+            // Generate PIN
+            $pin = str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
+
+            // Simpan data pesanan
             $order = Order::create([
-                'user_id' => auth()->id(),
-                'location_id' => $validatedData['location_id'],
-                'customer_name' => $validatedData['customer_name'],
-                'customer_email' => $validatedData['customer_email'],
-                'customer_phone' => $validatedData['customer_phone'],
-                'order_type' => $validatedData['order_type'],
-                'payment_method' => $validatedData['payment_method'],
-                'status' => 'pending',
-                'delivery_address' => $validatedData['delivery_address'],
-                'delivery_notes' => $validatedData['delivery_notes'],
+                'order_code'      => $orderCode,
+                'pickup_pin'      => $pin,
+                'user_id'         => auth()->id(),
+                'location_id'     => $validatedData['location_id'],
+                'customer_name'   => $validatedData['customer_name'],
+                'customer_email'  => $validatedData['customer_email'],
+                'customer_phone'  => $validatedData['customer_phone'],
+                'order_type'      => $validatedData['order_type'],
+                'payment_method'  => $validatedData['payment_method'],
+                'status'          => 'pending',
+                'delivery_address'=> $validatedData['delivery_address'],
+                'delivery_notes'  => $validatedData['delivery_notes'],
+                'latitude'        => $validatedData['latitude'] ?? null, 
+                'longitude'       => $validatedData['longitude'] ?? null,
                 'subtotal_amount' => $recalculatedSubtotal,
                 'discount_amount' => $discountAmount,
-                'delivery_fee' => $deliveryFee,
-                'total_amount' => $recalculatedTotal,
-                'promo_id' => $promoId,
+                'delivery_fee'    => $deliveryFee,
+                'total_amount'    => $recalculatedTotal,
+                'promo_id'        => $promoId,
                 'delivery_employee_id' => null,
             ]);
-
-            // === PERUBAHAN DI SINI: Ganti logika QR dengan PIN ===
-            if ($order->order_type === 'pickup') {
-                $pin = str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
-                $order->pickup_pin = $pin;
-                $order->save();
-            }
 
             foreach ($cart as $itemKey => $cartItem) {
                 OrderItem::create([
@@ -215,7 +290,7 @@ class CheckoutController extends Controller
                     'product_name' => $cartItem['name'],
                     'quantity' => $cartItem['quantity'],
                     'unit_price' => $cartItem['price_per_unit'],
-                    'options' => $cartItem['size_option'] ? array_merge($cartItem['size_option'], ($cartItem['crust_option'] ?? [])) : ($cartItem['crust_option'] ?? null),
+                    'options' => array_filter([$cartItem['size_option'], $cartItem['crust_option']]),
                     'addons' => $cartItem['addons'],
                 ]);
             }
@@ -223,7 +298,7 @@ class CheckoutController extends Controller
             DB::commit();
             session()->forget('cart');
 
-            return redirect()->route('checkout.success', ['order_id' => $order->id])->with('success', 'Pesanan Anda berhasil dibuat!');
+            return redirect()->route('checkout.success', ['order_id' => $order->id])->with('success', 'Pesanan Anda dengan nomor ' . $orderCode . ' berhasil dibuat!');
 
         } catch (\Exception $e) {
             DB::rollBack();

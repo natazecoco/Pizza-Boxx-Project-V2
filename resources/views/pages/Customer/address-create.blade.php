@@ -28,7 +28,7 @@
                 <label class="block text-gray-700 font-semibold mb-2">Nomor Telepon</label>
                 <input type="text" name="phone" class="w-full border rounded px-3 py-2" required>
             </div>
-            <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition">Simpan Alamat</button>
+            <button type="submit" class="bg-brand-red text-white px-4 py-2 rounded hover:bg-red-700 transition">Simpan Alamat</button>
         </form>
     </div>
 </div>

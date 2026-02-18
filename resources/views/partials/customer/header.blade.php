@@ -1,138 +1,185 @@
-<header class="bg-white text-gray-800 shadow-md fixed top-0 left-0 w-full z-40 backdrop-blur-sm bg-white/90">
-    <nav class="container mx-auto px-4 py-3 grid grid-cols-3 items-center">
-        <!-- Logo -->
-        <div class="flex items-center">
-            <a href="{{ route('home') }}" class="flex items-center gap-2 group transition-all duration-200">
-                <img src="{{ asset('images/pizza-boxx-logo.png') }}"
-                     alt="Pizza Boxx Logo"
-                     class="h-10 w-10 object-contain drop-shadow-md transition-transform duration-300 group-hover:rotate-[15deg]"
-                     loading="eager">
-                <span class="hidden sm:block text-xl font-bold text-red-600 group-hover:text-red-700 transition-colors uppercase">Pizza Boxx</span>
+{{-- resources/views/partials/customer/header.blade.php --}}
+
+<div x-data="{ mobileMenuOpen: false, scrolled: false }" 
+     @scroll.window="scrolled = (window.pageYOffset > 20)"
+     class="w-full flex justify-center px-2 lg:px-6 relative"> 
+    
+    {{-- 
+        THE PILL CONTAINER
+        - Ukuran font dan logo sudah dikembalikan ke ukuran asli (Lebih besar).
+        - Logic 'fixed' dihapus (karena sudah diurus Layout), tapi logic 'scrolled' tetap ada.
+    --}}
+    <div :class="{ 
+            'bg-white/100 py-3 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] border-brand-red/20': scrolled, 
+            'bg-white/90 py-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] border-gray-900': !scrolled 
+         }"
+         class="backdrop-blur-md border-2 rounded-[2.5rem] px-6 lg:px-12 flex items-center justify-between transition-all duration-500 ease-in-out w-full max-w-7xl">
+        
+        {{-- LOGO (Ukuran Kembali Besar) --}}
+        <div class="flex-1 flex items-center">
+            <a href="{{ route('home') }}" class="flex items-center gap-2 group">
+                <img src="{{ asset('images/pizza-boxx-logo.png') }}" alt="Logo"
+                     class="h-12 w-12 lg:h-14 lg:w-14 object-contain transition-transform duration-500 group-hover:rotate-12">
             </a>
         </div>
 
-        <!-- Main Navigation Links -->
-        <div class="flex items-center justify-center gap-4 md:gap-6">
-            <a href="{{ route('home') }}"
-               class="group flex items-center h-10 px-3 rounded-lg font-bold relative transition-all duration-300 whitespace-nowrap
-                      {{ request()->routeIs('home') ? 'text-red-600' : 'text-gray-700 hover:text-red-600' }}">
-                HOME
-                <span class="absolute left-1/2 -bottom-1 -translate-x-1/2 h-0.5 bg-red-500 rounded-full transition-all duration-300
-                             {{ request()->routeIs('home') ? 'w-8' : 'w-0 group-hover:w-8' }}"></span>
-            </a>
-            <a href="{{ route('menu.index') }}"
-               class="group flex items-center h-10 px-3 rounded-lg font-bold relative transition-all duration-300 whitespace-nowrap
-                      {{ request()->routeIs('menu.index') ? 'text-red-600' : 'text-gray-700 hover:text-red-600' }}">
-                MENU
-                <span class="absolute left-1/2 -bottom-1 -translate-x-1/2 h-0.5 bg-red-500 rounded-full transition-all duration-300
-                             {{ request()->routeIs('menu.index') ? 'w-8' : 'w-0 group-hover:w-8' }}"></span>
-            </a>
-            <a href="{{ route('about') }}"
-               class="group flex items-center h-10 px-3 rounded-lg font-bold relative transition-all duration-300 whitespace-nowrap
-                      {{ request()->routeIs('about') ? 'text-red-600' : 'text-gray-700 hover:text-red-600' }}">
-                ABOUT
-                <span class="absolute left-1/2 -bottom-1 -translate-x-1/2 h-0.5 bg-red-500 rounded-full transition-all duration-300
-                             {{ request()->routeIs('about') ? 'w-8' : 'w-0 group-hover:w-8' }}"></span>
-            </a>
-            <a href="{{ route('contact') }}"
-               class="group flex items-center h-10 px-3 rounded-lg font-bold relative transition-all duration-300 whitespace-nowrap
-                      {{ request()->routeIs('contact') ? 'text-red-600' : 'text-gray-700 hover:text-red-600' }}">
-                CONTACT
-                <span class="absolute left-1/2 -bottom-1 -translate-x-1/2 h-0.5 bg-red-500 rounded-full transition-all duration-300
-                             {{ request()->routeIs('contact') ? 'w-8' : 'w-0 group-hover:w-8' }}"></span>
-            </a>
+        {{-- DESKTOP NAV (Font Kembali ke 14px) --}}
+        <div class="hidden lg:flex items-center justify-center gap-2">
+            @php
+                $navLinks = [
+                    ['route' => 'home', 'label' => 'HOME'],
+                    ['route' => 'menu.index', 'label' => 'MENU'],
+                    ['route' => 'about', 'label' => 'ABOUT'],
+                    ['route' => 'contact', 'label' => 'CONTACT'],
+                ];
+            @endphp
+
+            @foreach($navLinks as $link)
+                <a href="{{ route($link['route']) }}"
+                   class="px-5 py-2 text-[14px] font-black tracking-widest transition-all duration-300 rounded-full
+                          {{ request()->routeIs($link['route']) 
+                             ? 'bg-brand-red text-white shadow-lg shadow-red-100' 
+                             : 'text-gray-900 hover:text-brand-red hover:bg-red-50' }}">
+                    {{ $link['label'] }}
+                </a>
+            @endforeach
         </div>
 
-        <!-- User Actions (Bagian yang sudah diperbarui) -->
-        <div class="flex items-center justify-end gap-3 sm:gap-5">
-            <a href="{{ route('cart.index') }}"
-               class="relative flex items-center justify-center w-10 h-10 transition-all duration-300 group focus:outline-none"
-               aria-label="Keranjang">
-                <svg xmlns="http://www.w3.org/2000/svg"
-                     class="h-6 w-6 text-gray-700 group-hover:text-red-600 transition-colors duration-200"
-                     viewBox="0 0 24 24"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="2"
-                     stroke-linecap="round"
-                     stroke-linejoin="round">
-                    <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
-                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+        {{-- RIGHT SECTION --}}
+        <div class="flex-1 flex items-center justify-end gap-3 sm:gap-4">
+            {{-- CART --}}
+            <a href="{{ route('cart.index') }}" class="relative p-3 rounded-2xl bg-gray-50 text-gray-900 hover:bg-gray-900 hover:text-white transition-all group border-2 border-transparent hover:border-gray-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                 </svg>
                 @php $cartCount = session('cart') ? count(session('cart')) : 0; @endphp
                 @if($cartCount > 0)
-                    <span class="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center border-2 border-white shadow-md transition-all duration-200 group-hover:animate-bounce">
+                    <span class="absolute -top-1 -right-1 bg-brand-red text-white text-[9px] font-black rounded-full w-5 h-5 flex items-center justify-center border-2 border-white animate-bounce">
                         {{ $cartCount }}
                     </span>
                 @endif
             </a>
 
-            <!-- Dropdown Pengguna dengan Jaring Pengaman -->
-            <div class="relative" x-data="{ open: false }">
-                @if(Auth::guard('web')->check() && !Auth::guard('web')->user()->hasAnyRole(['admin', 'employee']))
-                    <button @click="open = !open"
-                            @blur="setTimeout(() => open = false, 150)"
-                            class="flex items-center h-10 px-3 rounded-lg hover:bg-red-50 hover:text-red-600 transition-all duration-200 focus:outline-none">
-                        <svg xmlns="http://www.w3.org/2000/svg"
-                             class="h-6 w-6 text-gray-700 mr-2"
-                             fill="none"
-                             viewBox="0 0 24 24"
-                             stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 15c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        <span class="font-bold text-base text-gray-700 hidden sm:inline-block">
-                            {{ ucfirst(Str::of(Auth::user()->name)->explode(' ')->first()) }}
-                        </span>
-                    </button>
-                    <div x-show="open"
-                         x-transition:enter="transition ease-out duration-100"
-                         x-transition:enter-start="opacity-0 scale-95"
-                         x-transition:enter-end="opacity-100 scale-100"
-                         x-transition:leave="transition ease-in duration-75"
-                         x-transition:leave-start="opacity-100 scale-100"
-                         x-transition:leave-end="opacity-0 scale-95"
-                         class="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl py-2 z-50 border border-gray-100 divide-y divide-gray-100"
-                         style="display: none;">
-                        <div class="px-4 py-3">
-                            <div class="font-bold text-gray-800 truncate">{{ Auth::user()->name }}</div>
-                            <div class="text-sm text-gray-500 truncate">{{ Auth::user()->email }}</div>
-                        </div>
-                        <div class="py-1">
-                            <a href="{{ route('user.profile') }}"
-                               class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors">
-                                <svg class="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                                </svg>
-                                Akun Saya
-                            </a>
-                            <a href="{{ route('user.dashboard') }}"
-                               class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors">
-                                <svg class="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                                </svg>
-                                Orderan Saya
-                            </a>
-                        </div>
-                        <div class="py-1">
-                            <form action="{{ route('logout') }}" method="POST" class="w-full">
-                                @csrf
-                                <button type="submit"
-                                        class="w-full text-left flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors">
-                                    <svg class="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                                    </svg>
-                                    Keluar
-                                </button>
-                            </form>
+            {{-- USER (Desktop Only) --}}
+            <div class="hidden lg:block">
+                @if(Auth::check() && !Auth::user()->hasAnyRole(['admin', 'employee']))
+                    <div class="relative" x-data="{ open: false }" @click.away="open = false">
+                        <button @click="open = !open" 
+                                class="flex items-center gap-2 p-1 pr-4 rounded-full bg-slate-50 border-2 border-gray-100 hover:border-gray-900 transition-all">
+                            <div class="w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center text-white text-xs font-black shadow-md">
+                                {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
+                            </div>
+                            <span class="text-[10px] font-black text-gray-900 uppercase tracking-widest italic truncate max-w-[80px]">
+                                {{ Str::of(Auth::user()->name)->explode(' ')->first() }}
+                            </span>
+                        </button>
+
+                        <div x-show="open" x-transition 
+                             class="absolute right-0 mt-4 w-64 bg-white border-2 border-gray-900 rounded-[2rem] shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] py-4 z-50 overflow-hidden"
+                             style="display: none;">
+                            
+                            <div class="px-6 py-3 border-b border-gray-100 mb-2">
+                                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Signed in as</p>
+                                <p class="text-sm font-black text-gray-900 truncate uppercase italic tracking-tighter">{{ Auth::user()->name }}</p>
+                            </div>
+                            <div class="px-2 space-y-1">
+                                <a href="{{ route('user.profile') }}" class="flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-red-50 text-gray-600 hover:text-brand-red transition-all font-black text-[10px] uppercase tracking-widest">
+                                    <i class="fas fa-user-circle text-lg w-6 text-center"></i> Profil Saya
+                                </a>
+                                <a href="{{ route('user.dashboard') }}" class="flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-red-50 text-gray-600 hover:text-brand-red transition-all font-black text-[10px] uppercase tracking-widest">
+                                    <i class="fas fa-box-open text-lg w-6 text-center"></i> Pesanan
+                                </a>
+                                <form action="{{ route('logout') }}" method="POST" class="pt-2 border-t border-gray-50 mt-2">
+                                    @csrf
+                                    <button type="submit" class="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-gray-900 text-white transition-all font-black text-[10px] uppercase tracking-widest hover:bg-brand-red">
+                                        <i class="fas fa-sign-out-alt text-lg w-6 text-center"></i> Keluar
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 @else
-                    <a href="#" @click.prevent="$dispatch('open-auth-modal', { form: 'login' })"
-                       class="flex items-center h-10 px-4 sm:px-6 rounded-xl bg-gradient-to-r from-red-600 to-red-500 text-white font-semibold shadow-md hover:from-red-700 hover:to-red-600 transition-all duration-200 hover:shadow-lg">
-                        Masuk
-                    </a>
+                    <button @click.prevent="$dispatch('open-auth-modal', { form: 'login' })"
+                            class="px-6 py-2.5 rounded-full bg-brand-red text-white text-[10px] font-black uppercase tracking-widest shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] border-2 border-transparent transition-all">
+                        Login
+                    </button>
                 @endif
             </div>
+
+            {{-- HAMBURGER BUTTON --}}
+            <button @click="mobileMenuOpen = !mobileMenuOpen" class="lg:hidden p-2 bg-gray-100 rounded-xl text-gray-900 active:scale-90 transition-all border-2 border-transparent hover:border-gray-900">
+                <i class="fas" :class="mobileMenuOpen ? 'fa-times text-xl' : 'fa-bars-staggered text-xl'"></i>
+            </button>
         </div>
-    </nav>
-</header>
+    </div>
+
+    {{-- 2. MOBILE MENU OVERLAY --}}
+    <div x-show="mobileMenuOpen" 
+         @click.away="mobileMenuOpen = false"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0 translate-y-[-10px]"
+         x-transition:enter-end="opacity-100 translate-y-0"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100 translate-y-0"
+         x-transition:leave-end="opacity-0 translate-y-[-10px]"
+         class="lg:hidden absolute top-full left-4 right-4 mt-4 bg-white border-2 border-gray-900 rounded-[2.5rem] p-6 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] z-40 overflow-hidden" 
+         style="display: none;">
+        
+        <div class="space-y-4">
+            {{-- Nav Links --}}
+            <div class="space-y-2">
+                @foreach($navLinks as $link)
+                    {{-- UPDATE: Tambah Hover Brand Red --}}
+                    <a href="{{ route($link['route']) }}" 
+                       class="block px-6 py-4 rounded-2xl font-black text-sm tracking-widest uppercase transition-all
+                              {{ request()->routeIs($link['route']) 
+                                 ? 'bg-brand-red text-white shadow-md' 
+                                 : 'bg-gray-50 text-gray-500 border border-gray-100 hover:bg-brand-red hover:text-white hover:border-brand-red hover:shadow-md' }}">
+                        {{ $link['label'] }}
+                    </a>
+                @endforeach
+            </div>
+
+            <hr class="border-gray-200 border-dashed">
+
+            @if(Auth::check())
+                {{-- Info Akun Mobile --}}
+                <div class="flex items-center gap-4 p-4 bg-slate-50 rounded-3xl border-2 border-gray-100">
+                    <div class="w-12 h-12 rounded-2xl bg-gray-900 flex items-center justify-center text-white font-black shadow-lg">
+                        {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
+                    </div>
+                    <div>
+                        <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Halo,</p>
+                        <p class="text-sm font-black text-gray-900 uppercase italic leading-tight truncate max-w-[150px]">{{ Auth::user()->name }}</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    {{-- UPDATE: Hover Effect di Menu Profil Mobile --}}
+                    <a href="{{ route('user.profile') }}" 
+                       class="flex flex-col items-center justify-center p-4 bg-white rounded-[2rem] border-2 border-gray-100 text-gray-600 hover:bg-brand-red hover:text-white hover:border-brand-red active:bg-brand-red active:text-white active:border-brand-red transition-all shadow-sm">
+                        <i class="fas fa-user-circle text-xl mb-2"></i>
+                        <span class="text-[9px] font-black uppercase tracking-widest">Profil</span>
+                    </a>
+                    <a href="{{ route('user.dashboard') }}" 
+                       class="flex flex-col items-center justify-center p-4 bg-white rounded-[2rem] border-2 border-gray-100 text-gray-600 hover:bg-brand-red hover:text-white hover:border-brand-red active:bg-brand-red active:text-white active:border-brand-red transition-all shadow-sm">
+                        <i class="fas fa-box-open text-xl mb-2"></i>
+                        <span class="text-[9px] font-black uppercase tracking-widest">Orderan</span>
+                    </a>
+                </div>
+
+                <form action="{{ route('logout') }}" method="POST">
+                    @csrf
+                    <button type="submit" class="w-full p-4 rounded-[2rem] bg-gray-900 text-white font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-brand-red active:bg-brand-red transition-all shadow-md">
+                        <i class="fas fa-sign-out-alt"></i> Keluar
+                    </button>
+                </form>
+            @else
+                <button @click="mobileMenuOpen = false; $dispatch('open-auth-modal', { form: 'login' })" 
+                        class="w-full p-5 rounded-[2.5rem] bg-gray-900 text-white font-black text-xs uppercase tracking-[0.2em] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none hover:bg-brand-red transition-all">
+                    MASUK KE AKUN
+                </button>
+            @endif
+        </div>
+    </div>
+</div>

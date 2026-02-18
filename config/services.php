@@ -31,4 +31,8 @@ return [
         ],
     ],
 
+    'social' => [
+        'instagram' => env('SOCIAL_INSTAGRAM', 'https://instagram.com/pizzaboxx_official'),
+        'tiktok'    => env('SOCIAL_TIKTOK', 'https://tiktok.com/@pizzaboxx_official'),
+    ],
 ];

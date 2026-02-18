@@ -11,7 +11,7 @@
      }">
     
     <div class="flex items-center gap-4 mb-6">
-        <a href="{{ route('pegawai.deliveries.index') }}" class="bg-white p-3 rounded-2xl shadow-sm text-gray-600 hover:text-red-600 transition-colors">
+        <a href="{{ route('pegawai.deliveries.index') }}" class="bg-white p-3 rounded-2xl shadow-sm text-gray-600 hover:text-brand-red transition-colors">
             <i class="fas fa-arrow-left"></i>
         </a>
         <h2 class="text-xl font-bold text-gray-800">Navigasi Pengantaran</h2>
@@ -19,33 +19,70 @@
 
     {{-- Card Informasi Pelanggan --}}
     <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100 mb-6">
-        <div class="bg-red-600 p-6 text-white">
+        <div class="bg-brand-red p-6 text-white">
             <p class="text-xs opacity-80 uppercase font-bold tracking-widest">Antar Pesanan #{{ $order->id }}</p>
             <h1 class="text-2xl font-black mt-1 uppercase">{{ $order->customer_name }}</h1>
         </div>
         
         <div class="p-6">
             <div class="flex gap-4 mb-8">
-                <div class="bg-red-50 p-4 rounded-2xl text-red-600 h-fit">
+                <div class="bg-red-50 p-4 rounded-2xl text-brand-red h-fit">
                     <i class="fas fa-map-marked-alt text-xl"></i>
                 </div>
                 <div>
-                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Alamat Pengiriman:</p>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                        Alamat Pengiriman:
+                        
+                        {{-- Indikator Jika Pakai Pin Point --}}
+                        @if($order->latitude && $order->longitude)
+                            <span class="bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-[9px] font-black border border-green-200">
+                                <i class="fas fa-crosshairs mr-1"></i> TITIK AKURAT
+                            </span>
+                        @endif
+                    </p>
                     <p class="text-gray-700 font-bold leading-relaxed mt-1">
                         {{ $order->delivery_address ?? 'Alamat belum diisi' }}
                     </p>
+                    @if($order->delivery_notes)
+                        <div class="mt-2 bg-yellow-50 p-2 rounded-lg border border-yellow-100 text-xs text-orange-800 italic">
+                            <span class="font-bold not-italic">Catatan:</span> "{{ $order->delivery_notes }}"
+                        </div>
+                    @endif
                 </div>
             </div>
 
+            {{-- LOGIKA SMART MAPS --}}
+            @php
+                // Cek apakah ada koordinat di database
+                $hasCoords = $order->latitude && $order->longitude;
+                
+                if ($hasCoords) {
+                    // JIKA ADA PIN POINT: Pakai Koordinat GPS (Akurasi 100%)
+                    // Format: query=lat,lng
+                    $mapsUrl = "https://www.google.com/maps/search/?api=1&query={$order->latitude},{$order->longitude}";
+                    $mapsLabel = "BUKA TITIK LOKASI (GPS)";
+                    $mapsIcon = "fa-map-pin"; // Icon Jarum
+                    $btnColor = "bg-blue-600 hover:bg-blue-700 shadow-blue-200";
+                } else {
+                    // JIKA TIDAK ADA: Cari berdasarkan Teks Alamat (Akurasi Tebak-tebakan Google)
+                    $mapsUrl = "https://www.google.com/maps/search/?api=1&query=" . urlencode($order->delivery_address);
+                    $mapsLabel = "CARI ALAMAT DI MAPS";
+                    $mapsIcon = "fa-search-location"; // Icon Kaca Pembesar
+                    $btnColor = "bg-gray-600 hover:bg-gray-700 shadow-gray-200";
+                }
+            @endphp
+
             {{-- Tombol Navigasi --}}
-            <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($order->delivery_address) }}" 
+            <a href="{{ $mapsUrl }}" 
                target="_blank"
-               class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-center flex items-center justify-center gap-3 shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all mb-4">
-                <i class="fas fa-location-arrow"></i> BUKA GOOGLE MAPS
+               class="w-full {{ $btnColor }} text-white py-4 rounded-2xl font-black text-center flex items-center justify-center gap-3 shadow-lg transition-all mb-4">
+                <i class="fas {{ $mapsIcon }}"></i> {{ $mapsLabel }}
             </a>
 
             @php
                 $phone = $order->customer_phone;
+                // Bersihkan nomor HP
+                $phone = preg_replace('/[^0-9]/', '', $phone);
                 if(str_starts_with($phone, '0')) {
                     $phone = '62' . substr($phone, 1);
                 }
@@ -65,9 +102,22 @@
             @foreach($order->orderItems as $item)
             <li class="flex justify-between items-center bg-white p-3 rounded-xl border border-gray-100">
                 <span class="text-sm font-bold text-gray-700">
-                    <span class="text-red-600">{{ $item->quantity }}x</span> {{ $item->product_name }}
+                    <span class="text-brand-red">{{ $item->quantity }}x</span> {{ $item->product_name }}
+                    
+                    {{-- Detail varian jika ada --}}
+                    @if($item->options)
+                        <br>
+                        <span class="text-[10px] text-gray-400 font-normal ml-5">
+                             @php
+                                $opts = is_array($item->options) ? $item->options : explode(',', $item->options);
+                            @endphp
+                            @foreach($opts as $opt)
+                                {{ is_array($opt) ? ($opt['name'] ?? '-') : trim($opt) }}@if(!$loop->last), @endif
+                            @endforeach
+                        </span>
+                    @endif
                 </span>
-                <input type="checkbox" class="rounded text-red-600 focus:ring-red-500 w-5 h-5 border-gray-300">
+                <input type="checkbox" class="rounded text-brand-red focus:ring-red-500 w-5 h-5 border-gray-300 cursor-pointer">
             </li>
             @endforeach
         </ul>
@@ -113,7 +163,7 @@
             <div class="p-8">
                 <div class="mb-6">
                     <div class="bg-gray-100 rounded-2xl p-4 border-2 border-gray-200 text-center">
-                        <div class="text-4xl font-black tracking-[0.3em] text-red-600 h-10" x-text="pin"></div>
+                        <div class="text-4xl font-black tracking-[0.3em] text-brand-red h-10" x-text="pin"></div>
                         <p class="text-[10px] text-gray-400 mt-2 uppercase font-bold">Minta 6-Digit PIN dari Pelanggan</p>
                     </div>
                 </div>
@@ -125,7 +175,7 @@
                             <span x-text="n"></span>
                         </button>
                     </template>
-                    <button @click="pin = ''" class="h-14 bg-red-100 text-red-600 rounded-xl font-bold flex items-center justify-center">
+                    <button @click="pin = ''" class="h-14 bg-red-100 text-brand-red rounded-xl font-bold flex items-center justify-center">
                         <i class="fas fa-times"></i>
                     </button>
                     <button @click="if(pin.length < 6) pin += '0'" class="h-14 bg-gray-50 rounded-xl font-black text-xl text-gray-700 border border-gray-100">0</button>
@@ -150,7 +200,12 @@
     function submitDeliveryPin(orderId, pinCode) {
         if (pinCode.length < 6) return;
         
-        Swal.fire({ title: 'Memverifikasi...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        // 1. Loading State di Tengah
+        PizzaAlert.fire({ 
+            title: 'MEMVERIFIKASI...', 
+            allowOutsideClick: false, 
+            didOpen: () => { PizzaAlert.showLoading() } 
+        });
 
         fetch("{{ route('pegawai.qr.verify') }}", {
             method: "POST",
@@ -164,19 +219,22 @@
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                Swal.fire({ 
-                    icon: 'success', 
-                    title: 'Berhasil!', 
-                    text: 'Pesanan telah diterima pelanggan.', 
-                    timer: 2000, 
-                    showConfirmButton: false 
-                }).then(() => {
-                    // Redirect kembali ke daftar pengantaran
-                    window.location.href = "{{ route('pegawai.deliveries.index') }}";
-                });
+                // Redirect jika sukses
+                window.location.href = "{{ route('pegawai.deliveries.index') }}?success=delivered";
             } else {
-                Swal.fire({ icon: 'error', title: 'Gagal', text: data.message });
+                PizzaAlert.fire({ 
+                    icon: 'error', 
+                    title: 'PIN SALAH!', 
+                    text: data.message 
+                });
             }
+        })
+        .catch(error => {
+            PizzaAlert.fire({ 
+                icon: 'error', 
+                title: 'ERROR SISTEM', 
+                text: 'Gagal menghubungi server.' 
+            });
         });
     }
 </script>

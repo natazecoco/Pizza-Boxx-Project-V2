@@ -1,156 +1,177 @@
-@extends('layouts.customer')
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Berhasil! | Pizza Boxx</title>
 
-@section('content')
-    <div class="container mx-auto px-4 py-8 animate-fade-in">
-        <div class="bg-white p-8 rounded-xl shadow-xl max-w-3xl mx-auto border border-gray-100 transform transition-all duration-300 hover:shadow-2xl">
-            <div class="text-center mb-8">
-                <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                    </svg>
+    {{-- LIBRARIES --}}
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,600;0,800;1,800&display=swap" rel="stylesheet">
+    
+    {{-- CONFETTI LIB --}}
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-red': '#DC2626',
+                        'brand-dark': '#111827',
+                        'brand-yellow': '#FCD34D',
+                    },
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    animation: {
+                        'bounce-slow': 'bounce 3s infinite',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: #F8FAFC; color: #111827; }
+        .bg-pizza-pattern {
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 15l-5.5 11h11L30 15zm0-10l15 30H15L30 5z' fill='%23DC2626' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E");
+        }
+        /* Pattern khusus untuk sisi kiri (warna putih transparan) */
+        .bg-pizza-pattern-white {
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 15l-5.5 11h11L30 15zm0-10l15 30H15L30 5z' fill='%23ffffff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-pizza-pattern flex items-center justify-center p-4 lg:p-8">
+
+    {{-- MAIN CONTAINER (Lebar di Desktop) --}}
+    <div class="w-full max-w-5xl relative">
+        
+        {{-- Shadow Decoration --}}
+        <div class="absolute inset-0 bg-gray-900 rounded-[2.5rem] transform translate-x-2 translate-y-2 md:translate-x-4 md:translate-y-4"></div>
+
+        {{-- KARTU UTAMA (Flex Column di HP, Row di Desktop) --}}
+        <div class="relative bg-white border-2 border-gray-900 rounded-[2.5rem] overflow-hidden flex flex-col md:flex-row shadow-xl">
+            
+            {{-- BAGIAN KIRI: HERO / CELEBRATION (Merah) --}}
+            <div class="md:w-5/12 bg-brand-red bg-pizza-pattern-white p-8 md:p-12 flex flex-col justify-center items-center text-center relative overflow-hidden border-b-2 md:border-b-0 md:border-r-2 border-gray-900">
+                
+                {{-- Icon Check --}}
+                <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center mb-6 border-4 border-gray-900 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)] animate-bounce-slow relative z-10">
+                    <i class="fas fa-check text-4xl text-brand-red"></i>
                 </div>
-                <h1 class="text-4xl font-bold text-green-600 mb-3">Pesanan Berhasil!</h1>
-                <p class="text-gray-700 text-lg mb-6">Terima kasih telah memesan di Pizza Boxx. Berikut detail pesanan Anda:</p>
-                <div class="w-full bg-gradient-to-r from-green-100 to-green-50 p-3 rounded-lg border-l-4 border-green-500 mb-6">
-                    <p class="text-green-700 font-medium">
-                        Nomor Pesanan: 
-                        <a href="{{ route('user.order.show', $order->id) }}" class="font-bold underline hover:text-green-900">
-                            #{{ $order->id }} (Klik untuk Lacak)
-                        </a>
+
+                <div class="relative z-10 text-white">
+                    <h1 class="text-3xl md:text-4xl font-black italic uppercase tracking-tighter mb-3 leading-none">Order<br>Received!</h1>
+                    <p class="text-sm md:text-base font-medium opacity-90 max-w-xs mx-auto">
+                        Terima kasih, <span class="font-black underline decoration-wavy decoration-white/50">{{ explode(' ', $order->customer_name)[0] }}</span>!<br>
+                        Pesananmu sudah masuk dapur kami.
                     </p>
                 </div>
+
+                {{-- Hiasan Circle --}}
+                <div class="absolute -bottom-10 -left-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
+                <div class="absolute top-10 right-10 w-20 h-20 bg-yellow-400/20 rounded-full blur-xl"></div>
             </div>
 
-            @if($order->order_type === 'pickup')
-                <h2 class="text-xl font-bold text-gray-800 mb-2">Kode Pengambilan Anda</h2>
-                <div class="text-center bg-gray-100 p-6 rounded-lg mb-6">
-                    <p class="text-4xl font-extrabold text-red-600 tracking-wider">{{ $order->pickup_pin }}</p>
-                    <p class="text-sm text-gray-500 mt-2">Tunjukkan kode ini kepada pegawai saat mengambil pesanan Anda.</p>
-                </div>
-            @endif
+            {{-- BAGIAN KANAN: DETAILS & ACTION (Putih) --}}
+            <div class="md:w-7/12 p-8 md:p-12 bg-white flex flex-col justify-center">
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div class="bg-gray-50 p-5 rounded-lg border border-gray-200">
-                    <h2 class="text-xl font-bold text-red-600 mb-3 flex items-center">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                        Informasi Pelanggan
-                    </h2>
-                    <div class="space-y-2">
-                        <p class="text-gray-700"><span class="font-semibold">Nama:</span> {{ $order->customer_name }}</p>
-                        <p class="text-gray-700"><span class="font-semibold">Telepon:</span> {{ $order->customer_phone }}</p>
-                        <p class="text-gray-700"><span class="font-semibold">Lokasi Toko:</span> {{ $order->location->name }}</p>
-                        <p class="text-gray-700"><span class="font-semibold">Alamat Toko:</span> {{ $order->location->address }}</p>
-                    </div>
-                </div>
-
-                <div class="bg-gray-50 p-5 rounded-lg border border-gray-200">
-                    <h2 class="text-xl font-bold text-red-600 mb-3 flex items-center">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                        </svg>
-                        Detail Pesanan
-                    </h2>
-                    <div class="space-y-2">
-                        <p class="text-gray-700"><span class="font-semibold">Tipe:</span> {{ ucfirst($order->order_type) }}</p>
-                        @if($order->order_type === 'delivery')
-                            <p class="text-gray-700"><span class="font-semibold">Alamat:</span> {{ $order->delivery_address }}</p>
-                            @if($order->delivery_notes)
-                                <p class="text-gray-700"><span class="font-semibold">Catatan:</span> {{ $order->delivery_notes }}</p>
-                            @endif
-                        @endif
-                        <p class="text-gray-700"><span class="font-semibold">Pembayaran:</span> {{ ucfirst(str_replace('_', ' ', $order->payment_method)) }}</p>
-                        <p class="text-gray-700"><span class="font-semibold">Status:</span> <span class="px-2 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800">{{ ucfirst($order->status) }}</span></p>
-                        <p class="text-gray-700"><span class="font-semibold">Waktu:</span> {{ $order->created_at->format('d M Y, H:i') }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-gray-50 p-5 rounded-lg border border-gray-200 mb-8">
-                <h2 class="text-xl font-bold text-red-600 mb-4 flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4z" />
-                    </svg>
-                    Item Pesanan
-                </h2>
-                <div class="divide-y divide-gray-200">
-                    @foreach($order->orderItems as $item)
-                        <div class="py-3 flex justify-between items-start">
-                            <div>
-                                <p class="font-medium text-gray-800">
-                                    {{ $item->quantity }}x {{ $item->product_name }}
-                                    <span class="text-gray-600">(Rp {{ number_format($item->unit_price, 0, ',', '.') }})</span>
-                                </p>
-                                @if(is_array($item->options))
-                                    <div class="text-sm text-gray-500 mt-1">
-                                        @foreach($item->options as $option)
-                                            @if(isset($option['name']))
-                                                <span class="inline-block bg-gray-100 rounded px-2 py-1 mr-1 mb-1">
-                                                    {{ $option['name'] }}
-                                                </span>
-                                            @endif
-                                        @endforeach
-                                    </div>
-                                @endif
-                                @if(!empty($item->addons))
-                                    <div class="text-sm text-gray-500 mt-1">
-                                        <span class="font-medium">Tambahan:</span>
-                                        @foreach($item->addons as $addon)
-                                            <span class="inline-block bg-gray-100 rounded px-2 py-1 mr-1 mb-1">
-                                                {{ $addon['name'] }}
-                                            </span>
-                                        @endforeach
-                                    </div>
-                                @endif
-                            </div>
-                            <p class="font-semibold text-gray-800">Rp {{ number_format($item->quantity * $item->unit_price, 0, ',', '.') }}</p>
+                {{-- 1. STATUS BOX (PIN / ESTIMASI) --}}
+                <div class="bg-slate-50 border-2 border-gray-900 rounded-2xl p-6 mb-8 relative group">
+                    @if($order->order_type === 'pickup')
+                        {{-- PICKUP MODE --}}
+                        <div class="flex justify-between items-start mb-2">
+                            <p class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">PICKUP PIN</p>
+                            <i class="fas fa-store text-gray-300"></i>
                         </div>
-                    @endforeach
-                </div>
-            </div>
+                        <div class="text-5xl md:text-6xl font-black text-brand-red tracking-widest font-mono text-center my-2">
+                            {{ $order->pickup_pin }}
+                        </div>
+                        <div class="border-t-2 border-dashed border-gray-200 mt-4 pt-3 text-center">
+                            <p class="text-[10px] font-bold text-gray-500 flex items-center justify-center gap-1">
+                                <i class="fas fa-info-circle"></i> Tunjukkan PIN ini ke kasir outlet.
+                            </p>
+                        </div>
+                    @else
+                        {{-- DELIVERY MODE --}}
+                        <div class="flex justify-between items-start mb-4">
+                            <p class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">ESTIMASI SAMPAI</p>
+                            <div class="bg-green-100 text-green-700 px-2 py-1 rounded text-[10px] font-black uppercase">Confirmed</div>
+                        </div>
+                        
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="text-4xl md:text-5xl font-black text-gray-900">30-45</div>
+                            <div class="text-xs font-bold text-gray-400 uppercase leading-tight">Menit<br>Lagi</div>
+                        </div>
 
-            <div class="bg-gray-50 p-5 rounded-lg border border-gray-200">
-                <h2 class="text-xl font-bold text-red-600 mb-4 flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" />
-                    </svg>
-                    Ringkasan Pembayaran
-                </h2>
+                        <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden border border-gray-300">
+                            <div class="bg-brand-red h-full rounded-full animate-[width_2s_ease-in-out_infinite]" style="width: 45%"></div>
+                        </div>
+                    @endif
+                </div>
+
+                {{-- 2. GRID INFO KECIL --}}
+                <div class="grid grid-cols-2 gap-4 mb-8">
+                    <div>
+                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">No. Order</p>
+                        <p class="text-sm font-black text-gray-900 uppercase">#{{ $order->order_code ?? $order->id }}</p>
+                    </div>
+                    <div>
+                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Total Bayar</p>
+                        <p class="text-sm font-black text-brand-red">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</p>
+                    </div>
+                </div>
+
+                {{-- 3. TOMBOL AKSI --}}
                 <div class="space-y-3">
-                    <div class="flex justify-between">
-                        <span class="text-gray-700">Subtotal</span>
-                        <span class="font-medium">Rp {{ number_format($order->subtotal_amount, 0, ',', '.') }}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-700">Diskon</span>
-                        <span class="font-medium text-green-600">- Rp {{ number_format($order->discount_amount, 0, ',', '.') }}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-700">Biaya Pengiriman</span>
-                        <span class="font-medium">Rp {{ number_format($order->delivery_fee, 0, ',', '.') }}</span>
-                    </div>
-                    <div class="border-t border-gray-200 pt-3 mt-3 flex justify-between">
-                        <span class="text-lg font-bold text-gray-800">Total Pembayaran</span>
-                        <span class="text-xl font-bold text-red-600">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</span>
+                    {{-- Primary Button --}}
+                    <a href="{{ route('user.dashboard') }}" class="group block w-full bg-brand-dark hover:bg-brand-red text-white text-center font-black py-4 rounded-xl uppercase tracking-widest text-xs transition-all shadow-[4px_4px_0px_0px_rgba(220,38,38,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] border-2 border-transparent">
+                        <span class="group-hover:hidden">Lacak Pesanan</span>
+                        <span class="hidden group-hover:inline">Lihat Status <i class="fas fa-arrow-right ml-1"></i></span>
+                    </a>
+                    
+                    {{-- Secondary Buttons (Grid) --}}
+                    <div class="grid grid-cols-2 gap-3">
+                        <a href="https://wa.me/6281218928030?text=Halo%20PizzaBoxx%2C%20saya%20mau%20konfirmasi%20order%20%23{{ $order->id }}" target="_blank" class="flex items-center justify-center gap-2 bg-white hover:bg-green-50 text-gray-900 font-bold py-3 rounded-xl uppercase text-[10px] transition-all border-2 border-gray-200 hover:border-green-500 hover:text-green-600">
+                            <i class="fab fa-whatsapp text-lg"></i> Konfirmasi
+                        </a>
+                        <a href="{{ route('home') }}" class="flex items-center justify-center gap-2 bg-white hover:bg-gray-50 text-gray-900 font-bold py-3 rounded-xl uppercase text-[10px] transition-all border-2 border-gray-200 hover:border-brand-red hover:text-brand-red">
+                            <i class="fas fa-home text-lg text-sm"></i> Home
+                        </a>
                     </div>
                 </div>
-            </div>
 
-            <div class="mt-10 flex flex-col sm:flex-row justify-center gap-4">
-                <a href="{{ route('home') }}" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg text-lg transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg flex items-center justify-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                    </svg>
-                    Kembali ke Beranda
-                </a>
-                <a href="{{ route('user.dashboard') }}" class="bg-white border border-red-600 text-red-600 hover:bg-red-50 font-bold py-3 px-6 rounded-lg text-lg transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg flex items-center justify-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                    Lihat Pesanan Saya
-                </a>
             </div>
         </div>
+        
+        {{-- Footer Kecil --}}
+        <div class="text-center mt-8">
+            <p class="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] opacity-50">Pizza Boxx • Good Food Good Mood</p>
+        </div>
+
     </div>
-@endsection
+
+    {{-- SCRIPT CONFETTI --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            var duration = 3 * 1000;
+            var animationEnd = Date.now() + duration;
+            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+            function randomInRange(min, max) { return Math.random() * (max - min) + min; }
+
+            var interval = setInterval(function() {
+                var timeLeft = animationEnd - Date.now();
+                if (timeLeft <= 0) return clearInterval(interval);
+                var particleCount = 50 * (timeLeft / duration);
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+            }, 250);
+        });
+    </script>
+
+</body>
+</html>

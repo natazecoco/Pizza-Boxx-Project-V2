@@ -1,104 +1,81 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-    <div class="w-full max-w-4xl mx-auto grid md:grid-cols-2 bg-white rounded-2xl shadow-2xl overflow-hidden">
+<div class="min-h-screen flex items-center justify-center bg-slate-50 p-4 lg:p-8">
+    {{-- CONTAINER UTAMA: Border Tebal & Hard Shadow --}}
+    <div class="w-full max-w-5xl mx-auto grid lg:grid-cols-2 bg-white rounded-[3rem] shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] overflow-hidden border-4 border-gray-900">
 
-        <!-- Kolom Kiri: Formulir Registrasi -->
-        <div class="p-8 md:p-12 flex flex-col justify-center">
-            <div class="mb-8 text-center">
-                <a href="{{ route('home') }}">
-                    <img src="{{ asset('images/pizza-boxx-logo.png') }}" alt="Pizza Boxx Logo" class="w-20 h-20 mx-auto mb-4">
-                </a>
-                <h1 class="text-3xl font-extrabold text-gray-900">Buat Akun Baru</h1>
-                <p class="text-gray-600 mt-1">Satu langkah lagi menuju pizza terlezat!</p>
+        {{-- BAGIAN KIRI: Form Register --}}
+        <div class="p-8 md:p-16 flex flex-col justify-center bg-white relative order-2 lg:order-1">
+            
+            {{-- Tombol Balik Mobile --}}
+            <a href="{{ route('home') }}" class="lg:hidden absolute top-6 right-6 text-gray-400 hover:text-brand-red">
+                <i class="fas fa-times text-xl"></i>
+            </a>
+
+            {{-- Logo Mobile --}}
+            <div class="mb-8 lg:hidden text-center">
+                <img src="{{ asset('images/pizza-boxx-logo.png') }}" class="w-20 mx-auto">
             </div>
 
-            {{-- Menampilkan pesan error jika ada --}}
-            @if ($errors->any())
-                <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-r-lg" role="alert">
-                    <p class="font-bold">Oops! Terjadi kesalahan.</p>
-                    <ul>
-                        @foreach ($errors->all() as $error)
-                            <li class="text-sm">{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
+            {{-- Header --}}
+            <div class="mb-8 text-center lg:text-left">
+                <h1 class="text-3xl lg:text-5xl font-black text-gray-900 italic uppercase tracking-tighter leading-none mb-2">
+                    GABUNG SEKARANG
+                </h1>
+                <p class="text-gray-400 text-[10px] font-black uppercase tracking-[0.2em]">
+                    Daftar untuk nikmati promo eksklusif member
+                </p>
+            </div>
 
-            <form method="POST" action="{{ route('register') }}" class="space-y-6">
-                @csrf
+            {{-- FORM DARI PARTIAL --}}
+            @include('partials.customer._register-form')
 
-                <!-- Input Nama -->
-                <div>
-                    <label for="name" class="block text-sm font-semibold text-gray-700 mb-1">Nama Lengkap</label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-3">
-                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                        </span>
-                        <input id="name" name="name" type="text" autocomplete="name" required
-                               class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all"
-                               placeholder="John Doe" value="{{ old('name') }}">
-                    </div>
-                </div>
-
-                <!-- Input Email -->
-                <div>
-                    <label for="email" class="block text-sm font-semibold text-gray-700 mb-1">Email</label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-3">
-                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"></path></svg>
-                        </span>
-                        <input id="email" name="email" type="email" autocomplete="email" required
-                               class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all"
-                               placeholder="anda@email.com" value="{{ old('email') }}">
-                    </div>
-                </div>
-
-                <!-- Input Password -->
-                <div>
-                    <label for="password" class="block text-sm font-semibold text-gray-700 mb-1">Password</label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-3">
-                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                        </span>
-                        <input id="password" name="password" type="password" autocomplete="new-password" required
-                               class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all"
-                               placeholder="••••••••">
-                    </div>
-                </div>
-
-                <!-- Konfirmasi Password -->
-                <div>
-                    <label for="password_confirmation" class="block text-sm font-semibold text-gray-700 mb-1">Konfirmasi Password</label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-3">
-                           <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                        </span>
-                        <input id="password_confirmation" name="password_confirmation" type="password" autocomplete="new-password" required
-                               class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all"
-                               placeholder="••••••••">
-                    </div>
-                </div>
-
-                <!-- Tombol Daftar -->
-                <div>
-                    <button type="submit"
-                            class="w-full flex justify-center py-3 px-4 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5">
-                        Daftar
-                    </button>
-                </div>
-            </form>
-
-            <p class="mt-8 text-center text-sm text-gray-600">
-                Sudah punya akun?
-                <a href="{{ route('login') }}" class="font-semibold text-red-600 hover:text-red-500">Login di sini</a>
-            </p>
+            {{-- Footer Link --}}
+            <div class="mt-8 pt-8 border-t-2 border-dashed border-gray-100 text-center lg:text-left">
+                <p class="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                    Sudah punya akun?
+                    <a href="{{ route('login') }}" class="text-brand-red hover:text-gray-900 underline decoration-2 underline-offset-2 transition-colors ml-1">Login di sini →</a>
+                </p>
+            </div>
         </div>
 
-        <!-- Kolom Kanan: Gambar -->
-        <div class="hidden md:block">
-            <img src="{{ asset('images/pizzabanner.jpg') }}" alt="Pizza lezat" class="w-full h-full object-cover">
+        {{-- BAGIAN KANAN: Visual & Branding (Desktop Only) --}}
+        <div class="hidden lg:flex bg-brand-kraft p-12 xl:p-16 flex-col justify-between relative overflow-hidden text-gray-900 border-l-4 border-gray-900 order-1 lg:order-2">
+            
+            {{-- Pattern Background --}}
+            <div class="absolute inset-0 bg-pizza-pattern opacity-5"></div>
+            
+            {{-- Floating Pizza Decoration --}}
+            <img src="{{ asset('images/pizzabanner.png') }}" class="absolute -left-24 top-1/2 -translate-y-1/2 w-[120%] opacity-20 -rotate-12 blur-sm pointer-events-none filter sepia">
+
+            {{-- Header Visual --}}
+            <div class="relative z-10 text-right">
+                <a href="{{ route('home') }}" class="inline-block mb-10 group">
+                    <div class="bg-white p-3 rounded-2xl border-2 border-gray-900 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] group-hover:translate-x-1 group-hover:translate-y-1 group-hover:shadow-none transition-all">
+                        <img src="{{ asset('images/pizza-boxx-logo.png') }}" class="w-12 h-12 object-contain">
+                    </div>
+                </a>
+                <h2 class="text-5xl font-black italic uppercase tracking-tighter leading-[0.9] mb-6">
+                    BUKAN<br>SEKADAR<br><span class="text-brand-red text-6xl drop-shadow-sm">PIZZA.</span>
+                </h2>
+                <p class="text-gray-800 font-bold text-sm leading-relaxed max-w-xs ml-auto border-r-4 border-brand-red pr-4">
+                    Bergabunglah dengan ribuan #PizzaLovers lainnya dan dapatkan kebahagiaan di setiap kotak.
+                </p>
+            </div>
+
+            {{-- Testimoni Kecil --}}
+            <div class="relative z-10 bg-white p-6 rounded-3xl border-2 border-gray-900 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] mt-12">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-full bg-brand-red flex items-center justify-center text-white font-black text-xl">
+                        <i class="fas fa-heart text-sm"></i>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black uppercase tracking-[0.2em] mb-1 text-gray-400">Customer Favorite</p>
+                        <p class="text-sm font-bold italic text-gray-900">"Registrasi gampang, diskonnya nendang!"</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
     </div>
