@@ -317,9 +317,9 @@
                                 <input type="hidden" name="delivery_fee" id="inp_fee" value="0">
                                 <input type="hidden" name="discount_amount" id="inp_discount" value="0">
                                 <input type="hidden" name="total_amount" id="inp_total" value="{{ $cartTotal }}">
-                                <input type="hidden" name="customer_name" value="{{ $user->name }}">
+                                <input type="hidden" name="customer_name" id="inp_name" value="{{ $user->name }}">
                                 <input type="hidden" name="customer_email" value="{{ $user->email }}">
-                                <input type="hidden" name="customer_phone" value="{{ $primaryAddress->phone ?? $user->phone_number }}">
+                                <input type="hidden" name="customer_phone" id="inp_phone" value="{{ $primaryAddress->phone ?? $user->phone_number }}">
 
                                 {{-- Confirm Button --}}
                                 <button type="submit" id="btn_submit" class="group w-full bg-brand-red text-white font-black py-5 px-8 rounded-2xl uppercase tracking-[0.2em] text-sm shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] border-2 border-transparent hover:bg-white hover:text-gray-900 hover:border-gray-900 hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all duration-300 flex items-center justify-center gap-4">
@@ -343,22 +343,34 @@
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <div class="p-6 overflow-y-auto custom-scrollbar space-y-4 bg-slate-50 flex-grow">
+            <div id="address-list-container" class="p-6 overflow-y-auto custom-scrollbar space-y-4 bg-slate-50 flex-grow">
                 @forelse($addresses as $addr)
-                    <div onclick="selectAddress({{ json_encode($addr) }})" class="group cursor-pointer p-6 rounded-[2rem] border-4 border-transparent bg-white shadow-sm hover:border-gray-900 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all relative">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <span class="bg-gray-900 text-white text-[9px] font-black uppercase px-3 py-1.5 rounded-lg tracking-widest">{{ $addr->label }}</span>
-                                <p class="text-base font-bold text-gray-900 mt-4 leading-tight">{{ $addr->address }}</p>
-                                <p class="text-[10px] text-gray-400 font-black mt-2 uppercase tracking-widest italic">{{ $addr->city }} • {{ $addr->phone }}</p>
-                            </div>
-                            <div class="w-8 h-8 rounded-full border-4 border-gray-200 flex items-center justify-center group-hover:border-emerald-500 group-hover:bg-emerald-500 transition-all">
+                    <div class="group relative p-6 rounded-[2rem] border-4 border-transparent bg-white shadow-sm hover:border-gray-900 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all flex justify-between items-start gap-4">
+                        
+                        {{-- Area Klik untuk MEMILIH (Pointer) --}}
+                        <div onclick="selectAddress({{ json_encode($addr) }})" class="flex-grow cursor-pointer">
+                            <span class="bg-gray-900 text-white text-[9px] font-black uppercase px-3 py-1.5 rounded-lg tracking-widest">{{ $addr->label }}</span>
+                            <p class="text-base font-bold text-gray-900 mt-4 leading-tight">{{ $addr->address }}</p>
+                            <p class="text-[10px] text-gray-400 font-black mt-2 uppercase tracking-widest italic">
+                                {{ $addr->city ?? '' }} • {{ $addr->phone }}
+                            </p>
+                        </div>
+
+                        {{-- Area Tombol EDIT & SELECT Indicator --}}
+                        <div class="flex flex-col gap-2 shrink-0">
+                            {{-- Indikator Terpilih --}}
+                            <div class="w-10 h-10 rounded-xl border-4 border-gray-200 flex items-center justify-center group-hover:border-emerald-500 group-hover:bg-emerald-500 transition-all mb-auto">
                                 <i class="fas fa-check text-white text-[10px] opacity-0 group-hover:opacity-100"></i>
                             </div>
+
+                            {{-- Tombol Edit (Stop Propagation biar gak kepilih pas diklik) --}}
+                            <button onclick="editAddressInModal(event, {{ json_encode($addr) }})" class="w-10 h-10 rounded-xl bg-gray-100 border-2 border-transparent text-gray-400 hover:bg-white hover:text-brand-red hover:border-brand-red hover:shadow-md transition-all flex items-center justify-center z-20">
+                                <i class="fas fa-pen text-xs"></i>
+                            </button>
                         </div>
                     </div>
                 @empty
-                    <div class="text-center py-20">
+                    <div id="empty-state-msg" class="text-center py-20">
                         <i class="fas fa-map-marked-alt text-5xl text-gray-200 mb-4"></i>
                         <p class="text-gray-400 font-black text-xs uppercase tracking-widest">Belum ada alamat.</p>
                     </div>
@@ -372,90 +384,131 @@
         </div>
     </div>
 
-    {{-- MODAL FORM TAMBAH ALAMAT BARU --}}
-    <div id="modalCreateAddress" class="fixed inset-0 z-[110] hidden bg-gray-900/80 backdrop-blur-sm p-4 flex items-center justify-center">
-        <div class="bg-white w-full max-w-5xl rounded-[3rem] brutalist-card flex flex-col max-h-[90vh] overflow-hidden border-4 border-gray-900 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
-            <div class="p-6 border-b-4 border-gray-100 flex justify-between items-center bg-white">
+    {{-- MODAL FORM TAMBAH ALAMAT BARU (VERSI ADVANCED) --}}
+    <div id="modalCreateAddress" class="fixed inset-0 z-[110] hidden bg-gray-900/80 backdrop-blur-sm p-4 flex items-center justify-center transition-opacity duration-300">
+        <div class="bg-white w-full max-w-5xl rounded-[3rem] brutalist-card flex flex-col max-h-[90vh] overflow-hidden border-4 border-gray-900 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] transform scale-95 transition-transform duration-300">
+            
+            {{-- Header Modal --}}
+            <div class="p-6 border-b-4 border-gray-100 flex justify-between items-center bg-white sticky top-0 z-20">
                 <h3 class="text-2xl font-black uppercase italic text-gray-900 tracking-tighter">ALAMAT BARU.</h3>
-                <button type="button" onclick="closeCreateAddress()" class="w-12 h-12 rounded-xl bg-slate-50 border-2 border-gray-900 hover:bg-brand-red hover:text-white transition-all flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                <button type="button" onclick="closeCreateAddress()" class="w-12 h-12 rounded-xl bg-slate-50 border-2 border-gray-900 hover:bg-brand-red hover:text-white transition-all flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-1">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             
-            <form id="formCreateAddress" class="overflow-y-auto custom-scrollbar p-6 lg:p-8 bg-slate-50">
+            {{-- Body Modal --}}
+            <form id="formCreateAddress" class="overflow-y-auto custom-scrollbar p-6 lg:p-8 bg-slate-50 flex-grow">
                 @csrf
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+                <input type="hidden" name="_method" id="formMethod" value="POST">
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
+                    
                     {{-- KOLOM KIRI: INPUT DATA --}}
-                    <div class="space-y-4">
-                        <div>
-                            <label class="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Nama Penerima</label>
-                            <input type="text" name="receiver_name" value="{{ Auth::user()->name }}" required class="w-full bg-white border-2 border-gray-200 p-4 rounded-xl focus:border-gray-900 outline-none font-bold text-sm brutalist-input mt-1">
+                    <div class="space-y-5">
+                        {{-- Nama Penerima --}}
+                        <div class="group">
+                            <label class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1 mb-1 block">Nama Penerima</label>
+                            <input type="text" name="receiver_name" value="{{ Auth::user()->name }}" required 
+                                class="w-full bg-white border-2 border-gray-200 p-4 rounded-xl focus:border-gray-900 focus:ring-0 outline-none font-bold text-sm brutalist-input transition-all placeholder-gray-300">
                         </div>
 
+                        {{-- Label & Telepon --}}
                         <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Label</label>
-                                <input type="text" name="label" required placeholder="Rumah/Kantor" class="w-full bg-white border-2 border-gray-200 p-4 rounded-xl focus:border-gray-900 outline-none font-bold text-sm brutalist-input mt-1">
+                            <div class="group">
+                                <label class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1 mb-1 block">Label</label>
+                                <input type="text" name="label" required placeholder="Rumah/Kantor" 
+                                    class="w-full bg-white border-2 border-gray-200 p-4 rounded-xl focus:border-gray-900 focus:ring-0 outline-none font-bold text-sm brutalist-input transition-all placeholder-gray-300">
                             </div>
-                            <div>
-                                <label class="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">No. Telepon</label>
-                                <input type="tel" name="phone" value="{{ Auth::user()->phone_number }}" required class="w-full bg-white border-2 border-gray-200 p-4 rounded-xl focus:border-gray-900 outline-none font-bold text-sm brutalist-input mt-1">
+                            <div class="group">
+                                <label class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1 mb-1 block">No. Telepon</label>
+                                <input type="tel" name="phone" value="{{ Auth::user()->phone_number }}" required 
+                                    class="w-full bg-white border-2 border-gray-200 p-4 rounded-xl focus:border-gray-900 focus:ring-0 outline-none font-bold text-sm brutalist-input transition-all placeholder-gray-300">
                             </div>
                         </div>
 
-                        <div>
-                            <label class="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Alamat Peta (Otomatis)</label>
-                            <textarea name="map_address" id="modal-map-address" rows="2" class="w-full bg-gray-100 border-2 border-gray-200 p-4 rounded-xl font-bold text-xs text-gray-500 italic cursor-not-allowed mt-1" readonly placeholder="Titik di peta..."></textarea>
+                        {{-- Alamat Peta (Readonly) --}}
+                        <div class="group">
+                            <label class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1 mb-1 block">Alamat Peta (Otomatis)</label>
+                            <textarea name="map_address" id="modal-map-address" rows="2" readonly 
+                                class="w-full bg-gray-100 border-2 border-gray-200 p-4 rounded-xl font-bold text-xs text-gray-500 italic cursor-not-allowed resize-none transition-all" 
+                                placeholder="Geser pin di peta untuk mengisi ini..."></textarea>
+                            <p class="text-[9px] text-brand-red mt-1 italic font-bold tracking-tight"><i class="fas fa-crosshairs mr-1"></i> Digunakan untuk titik GPS kurir</p>
                         </div>
 
-                        <div>
-                            <label class="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Detail Alamat</label>
-                            <textarea name="detail_address" required rows="2" placeholder="Contoh: Jl. Pahlawan, No.1, Unit Melati, Lobby Utara, ..." class="w-full bg-white border-2 border-gray-200 p-4 rounded-xl focus:border-gray-900 outline-none font-bold text-sm brutalist-input mt-1 resize-none"></textarea>
+                        {{-- Detail Alamat --}}
+                        <div class="group">
+                            <label class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1 mb-1 block">Detail Alamat (Wajib)</label>
+                            <textarea name="detail_address" required rows="2" 
+                                class="w-full bg-white border-2 border-gray-200 p-4 rounded-xl focus:border-gray-900 focus:ring-0 outline-none font-bold text-sm brutalist-input transition-all resize-none placeholder-gray-300" 
+                                placeholder="Contoh: Pagar hitam, Lantai 2, Titip di satpam..."></textarea>
+                            <p class="text-[9px] text-gray-400 mt-1 italic font-bold tracking-tight"><i class="fas fa-info-circle mr-1"></i> Bantu kurir mengenali lokasi persisnya</p>
                         </div>
 
+                        {{-- Hidden Inputs --}}
                         <input type="hidden" name="latitude" id="modal-lat">
                         <input type="hidden" name="longitude" id="modal-lng">
                         <input type="hidden" name="city" id="modal-city">
+                        <input type="hidden" name="province" id="modal-province"> {{-- Tambahan Province --}}
                     </div>
 
                     {{-- KOLOM KANAN: PETA --}}
-                    <div class="flex flex-col h-full min-h-[300px]">
-                        <div class="flex gap-2 mb-3">
-                            <input type="text" id="modal-map-search" class="w-full bg-white border-2 border-gray-200 p-3 rounded-xl focus:border-gray-900 outline-none font-bold text-xs" placeholder="Cari lokasi/jalan...">
-                            <button type="button" onclick="searchAddressModal()" class="bg-gray-900 text-white px-5 rounded-xl font-black text-[10px] uppercase shadow-sm hover:bg-brand-red">CARI</button>
+                    <div class="flex flex-col h-full min-h-[400px] lg:min-h-0">
+                        <div class="mb-2">
+                            <label class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1 mb-1 block">Cari Lokasi</label>
+                            <div class="flex gap-2">
+                                <div class="relative w-full">
+                                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                                    <input type="text" id="modal-map-search" class="w-full bg-white border-2 border-gray-200 pl-10 pr-4 py-3 rounded-xl focus:border-gray-900 outline-none font-bold text-xs transition-all placeholder-gray-300" placeholder="Ketik nama jalan / gedung...">
+                                </div>
+                                <button type="button" onclick="searchAddressModal()" class="bg-gray-900 text-white px-6 rounded-xl font-black text-[10px] uppercase shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-y-0.5 transition-all border-2 border-gray-900 hover:bg-white hover:text-gray-900">CARI</button>
+                            </div>
                         </div>
                         
-                        <div class="flex-grow relative border-4 border-gray-900 rounded-[2rem] overflow-hidden shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                            <div id="map-modal" class="h-full w-full"></div>
-                            <button type="button" onclick="getCurrentLocationModal(event)" class="absolute top-3 right-3 z-[999] bg-white text-brand-red p-3 rounded-xl border-2 border-gray-900 shadow-md hover:bg-brand-red hover:text-white transition-all">
-                                <i class="fas fa-location-arrow"></i>
+                        <div class="flex-grow relative border-4 border-gray-900 rounded-[2rem] overflow-hidden shadow-sm group">
+                            <div id="map-modal" class="h-full w-full z-0"></div>
+                            
+                            {{-- Tombol GPS --}}
+                            <button type="button" onclick="getCurrentLocationModal(event)" 
+                                class="absolute top-4 right-4 z-[999] bg-white text-brand-red w-10 h-10 rounded-xl border-2 border-gray-900 shadow-md hover:bg-brand-red hover:text-white transition-all flex items-center justify-center group/gps">
+                                <i class="fas fa-location-arrow group-hover/gps:animate-pulse"></i>
                             </button>
+
+                            {{-- Center Marker Overlay (Optional UX improvement) --}}
+                            <div class="absolute inset-0 pointer-events-none flex items-center justify-center z-[800] opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                                <span class="bg-black/50 text-white text-[9px] px-2 py-1 rounded backdrop-blur-sm mb-12">Geser Peta / Marker</span>
+                            </div>
                         </div>
-                        <p class="text-[9px] font-bold text-gray-400 uppercase italic mt-3 text-center"><i class="fas fa-info-circle mr-1"></i> Geser pin ke titik jemput yang pas</p>
+                        <p class="text-[9px] font-bold text-gray-400 uppercase italic mt-3 text-center tracking-tight bg-gray-100 py-2 rounded-lg border border-gray-200">
+                            <i class="fas fa-map-marker-alt text-brand-red mr-1"></i> Pastikan pin merah berada di titik yang tepat
+                        </p>
                     </div>
                 </div>
             </form>
 
-            <div class="p-6 border-t-4 border-gray-100 bg-white">
-                <button type="button" id="btnSaveAddress" onclick="saveNewAddress()" class="w-full bg-gray-900 text-white font-black py-5 rounded-[1.5rem] uppercase text-xs tracking-[0.2em] shadow-[4px_4px_0px_0px_rgba(220,38,38,1)] hover:bg-brand-red transition-all flex items-center justify-center gap-3">
-                    <span>SIMPAN & GUNAKAN</span>
-                    <i class="fas fa-save"></i>
+            {{-- Footer Modal --}}
+            <div class="p-6 border-t-4 border-gray-100 bg-white sticky bottom-0 z-20">
+                <button type="button" id="btnSaveAddress" onclick="saveNewAddress()" class="w-full bg-gray-900 text-white font-black py-4 lg:py-5 rounded-[1.5rem] uppercase text-xs tracking-[0.2em] shadow-[4px_4px_0px_0px_rgba(220,38,38,1)] hover:bg-brand-red hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-3 border-2 border-transparent">
+                    <span>SIMPAN & GUNAKAN ALAMAT INI</span>
+                    <i class="fas fa-save text-lg"></i>
                 </button>
             </div>
         </div>
     </div>
     
     <script>
-        // Variabel global untuk Peta Modal (agar bisa diakses antar fungsi)
+        // Variabel global untuk Peta Modal
         let modalMap = null;
         let modalMarker = null;
 
         document.addEventListener('DOMContentLoaded', function () {
+            // Data Awal dari Server (Blade)
             const subtotal = parseFloat("{{ $cartTotal }}") || 0;
             let currentFee = 0;
             let currentDiscount = 0;
             let isCalculating = false;
 
+            // Mapping Element ID
             const el = {
                 form: document.getElementById('checkoutForm'),
                 realSelect: document.getElementById('location_id'),
@@ -469,7 +522,6 @@
                 methodCod: document.getElementById('method_cod'),
                 methodPickup: document.getElementById('method_pickup'),
                 total: document.getElementById('txt_total'),
-                totalMobile: document.getElementById('txt_total_mobile'),
                 fee: document.getElementById('txt_fee'),
                 rowFee: document.getElementById('row_fee'),
                 rowDisc: document.getElementById('row_discount'),
@@ -477,6 +529,8 @@
                 inpFee: document.getElementById('inp_fee'),
                 inpDiscount: document.getElementById('inp_discount'),
                 inpTotal: document.getElementById('inp_total'),
+                inpName: document.getElementById('inp_name'),
+                inpPhone: document.getElementById('inp_phone'),
                 secAddr: document.getElementById('address_section'),
                 lblDisplay: document.getElementById('display_label'),
                 addrDisplay: document.getElementById('display_address'),
@@ -490,12 +544,14 @@
                 btnPickupMap: document.getElementById('pickup_map_link'),
                 promoCode: document.getElementById('promo_code'),
                 btnPromo: document.getElementById('btn_promo'),
-                // Tambahan untuk Modal Alamat Baru
+                // Modal Elements
                 modalMapAddr: document.getElementById('modal-map-address'),
                 modalLat: document.getElementById('modal-lat'),
                 modalLng: document.getElementById('modal-lng'),
                 modalCity: document.getElementById('modal-city'),
-                formNewAddr: document.getElementById('formCreateAddress')
+                modalProvince: document.getElementById('modal-province'),
+                formNewAddr: document.getElementById('formCreateAddress'),
+                formMethod: document.getElementById('formMethod') // Input hidden _method yang kita tambah tadi
             };
 
             const PizzaAlert = Swal.mixin({
@@ -509,30 +565,111 @@
             });
 
             // ==========================================
-            // 1. LOGIKA NAVIGASI MODAL & PETA
+            // 1. LOGIKA MODAL (CREATE & EDIT)
             // ==========================================
+
+            // A. Buka Modal untuk TAMBAH BARU
             window.openCreateAddress = function() {
+                resetModalForm();
                 document.getElementById('modalAddressBook').classList.add('hidden');
                 document.getElementById('modalCreateAddress').classList.remove('hidden');
                 
-                // Inisialisasi peta dengan delay agar kontainer siap
+                // Animasi Scale
+                setTimeout(() => {
+                    document.querySelector('#modalCreateAddress > div').classList.remove('scale-95');
+                    document.querySelector('#modalCreateAddress > div').classList.add('scale-100');
+                }, 10);
+
+                // UI Reset
+                document.querySelector('#modalCreateAddress h3').innerText = "ALAMAT BARU.";
+                document.querySelector('#btnSaveAddress span').innerText = "SIMPAN & GUNAKAN";
+                
+                // Set Action Store
+                el.formNewAddr.action = "{{ route('user.address.store') }}";
+                if(document.getElementById('formMethod')) document.getElementById('formMethod').value = "POST";
+
+                initMapWithDelay();
+            };
+
+            // B. Buka Modal untuk EDIT
+            window.editAddressInModal = function(e, data) {
+                e.stopPropagation(); // Stop klik tembus ke selectAddress
+                
+                resetModalForm();
+                document.getElementById('modalAddressBook').classList.add('hidden');
+                document.getElementById('modalCreateAddress').classList.remove('hidden');
+
+                // Animasi Scale
+                setTimeout(() => {
+                    document.querySelector('#modalCreateAddress > div').classList.remove('scale-95');
+                    document.querySelector('#modalCreateAddress > div').classList.add('scale-100');
+                }, 10);
+
+                // UI Update
+                document.querySelector('#modalCreateAddress h3').innerText = "EDIT ALAMAT.";
+                document.querySelector('#btnSaveAddress span').innerText = "SIMPAN PERUBAHAN";
+
+                // Set Action Update
+                let updateUrl = "{{ route('user.address.update', ':id') }}";
+                el.formNewAddr.action = updateUrl.replace(':id', data.id);
+                // Penting: Laravel butuh _method PUT
+                // Pastikan kamu sudah tambah <input type="hidden" name="_method" id="formMethod" value="POST"> di HTML form modal
+                if(document.getElementById('formMethod')) document.getElementById('formMethod').value = "PUT";
+
+                // Isi Form
+                el.formNewAddr.querySelector('[name="receiver_name"]').value = data.receiver_name || "{{ Auth::user()->name }}";
+                el.formNewAddr.querySelector('[name="label"]').value = data.label;
+                el.formNewAddr.querySelector('[name="phone"]').value = data.phone;
+                el.formNewAddr.querySelector('[name="detail_address"]').value = data.detail_address || "";
+                el.formNewAddr.querySelector('[name="map_address"]').value = data.map_address || "";
+                
+                el.modalLat.value = data.latitude;
+                el.modalLng.value = data.longitude;
+                el.modalCity.value = data.city || "";
+                if(el.modalProvince) el.modalProvince.value = data.province || "";
+
+                // Init Map dengan koordinat yang ada
                 setTimeout(() => {
                     initModalMap();
-                    if(modalMap) modalMap.invalidateSize(); 
+                    if(modalMap) {
+                        const pos = [data.latitude, data.longitude];
+                        modalMap.setView(pos, 16);
+                        modalMarker.setLatLng(pos);
+                        modalMap.invalidateSize();
+                    }
                 }, 300);
             };
 
             window.closeCreateAddress = function() {
-                document.getElementById('modalCreateAddress').classList.add('hidden');
-                document.getElementById('modalAddressBook').classList.remove('hidden');
+                const modalDiv = document.querySelector('#modalCreateAddress > div');
+                modalDiv.classList.remove('scale-100');
+                modalDiv.classList.add('scale-95');
+                
+                setTimeout(() => {
+                    document.getElementById('modalCreateAddress').classList.add('hidden');
+                    document.getElementById('modalAddressBook').classList.remove('hidden');
+                }, 200);
             };
 
+            function resetModalForm() {
+                el.formNewAddr.reset();
+                el.formNewAddr.querySelector('[name="receiver_name"]').value = "{{ Auth::user()->name }}";
+                el.formNewAddr.querySelector('[name="phone"]').value = "{{ Auth::user()->phone_number }}";
+            }
+
+            function initMapWithDelay() {
+                setTimeout(() => {
+                    initModalMap();
+                    if(modalMap) modalMap.invalidateSize(); 
+                }, 300);
+            }
+
+            // --- LOGIKA PETA (Leaflet + Nominatim) ---
             function initModalMap() {
                 if (!modalMap) {
                     modalMap = L.map('map-modal', { zoomControl: false }).setView([-6.200000, 106.816666], 13);
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(modalMap);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(modalMap);
                     L.control.zoom({ position: 'bottomright' }).addTo(modalMap);
-                    
                     modalMarker = L.marker([-6.200000, 106.816666], { draggable: true }).addTo(modalMap);
                     
                     const updatePos = (lat, lng) => {
@@ -540,28 +677,25 @@
                         el.modalLng.value = lng;
                         reverseGeocodeModal(lat, lng);
                     };
-
-                    modalMarker.on('dragend', (e) => { 
-                        const pos = e.target.getLatLng(); 
-                        updatePos(pos.lat, pos.lng); 
-                    });
-                    
-                    modalMap.on('click', (e) => { 
-                        modalMarker.setLatLng(e.latlng); 
-                        updatePos(e.latlng.lat, e.latlng.lng); 
-                    });
+                    modalMarker.on('dragend', (e) => { const pos = e.target.getLatLng(); updatePos(pos.lat, pos.lng); });
+                    modalMap.on('click', (e) => { modalMarker.setLatLng(e.latlng); updatePos(e.latlng.lat, e.latlng.lng); });
                 }
             }
 
             async function reverseGeocodeModal(lat, lng) {
+                const txtArea = document.getElementById('modal-map-address');
+                txtArea.value = "Mengambil alamat...";
                 try {
                     const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
                     const data = await res.json();
-                    if(data) {
-                        el.modalMapAddr.value = data.display_name;
-                        el.modalCity.value = data.address.city || data.address.town || data.address.village || '';
+                    if(data && data.address) {
+                        txtArea.value = data.display_name;
+                        el.modalCity.value = data.address.city || data.address.town || data.address.municipality || '';
+                        if(el.modalProvince) el.modalProvince.value = data.address.state || '';
+                    } else {
+                        txtArea.value = "Alamat tidak ditemukan.";
                     }
-                } catch (e) { console.error(e); }
+                } catch (e) { txtArea.value = "Gagal ambil alamat."; }
             }
 
             window.searchAddressModal = async function() {
@@ -572,87 +706,129 @@
                     const data = await res.json();
                     if(data.length > 0) {
                         const pos = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
-                        modalMap.setView(pos, 16); 
-                        modalMarker.setLatLng(pos);
-                        el.modalLat.value = pos[0];
-                        el.modalLng.value = pos[1];
+                        modalMap.setView(pos, 16); modalMarker.setLatLng(pos);
+                        el.modalLat.value = pos[0]; el.modalLng.value = pos[1];
                         el.modalMapAddr.value = data[0].display_name;
-                    }
-                } catch (e) { console.error(e); }
+                        reverseGeocodeModal(pos[0], pos[1]);
+                    } else { PizzaAlert.fire('Oops!', 'Lokasi tidak ditemukan.', 'warning'); }
+                } catch (e) { PizzaAlert.fire('Error', 'Gagal cari lokasi.', 'error'); }
             };
 
             window.getCurrentLocationModal = function(event) {
                 if(!navigator.geolocation) return PizzaAlert.fire('Error', 'GPS tidak didukung', 'error');
+                event.currentTarget.classList.add('animate-pulse', 'text-brand-red');
                 navigator.geolocation.getCurrentPosition((pos) => {
-                    const lat = pos.coords.latitude; 
-                    const lng = pos.coords.longitude;
-                    modalMap.setView([lat, lng], 18); 
-                    modalMarker.setLatLng([lat, lng]);
-                    el.modalLat.value = lat;
-                    el.modalLng.value = lng;
+                    const lat = pos.coords.latitude; const lng = pos.coords.longitude;
+                    modalMap.setView([lat, lng], 18); modalMarker.setLatLng([lat, lng]);
+                    el.modalLat.value = lat; el.modalLng.value = lng;
                     reverseGeocodeModal(lat, lng);
-                });
+                    event.currentTarget.classList.remove('animate-pulse');
+                }, () => { event.currentTarget.classList.remove('animate-pulse'); PizzaAlert.fire('Gagal', 'Pastikan izin GPS aktif.', 'error'); }, { enableHighAccuracy: true });
             };
 
             // ==========================================
-            // 2. SIMPAN ALAMAT VIA AJAX
+            // 2. SIMPAN ALAMAT VIA AJAX (FIXED)
             // ==========================================
             window.saveNewAddress = function() {
-                const form = el.formNewAddr; // Pastikan el.formNewAddr sudah benar
+                const form = el.formNewAddr;
                 const btn = document.getElementById('btnSaveAddress');
 
-                // --- PAGAR 1: Paksa Browser Cek Validasi HTML ---
-                if (!form.reportValidity()) {
-                    return; // Berhenti di sini kalau ada yang kosong (required)
-                }
-
-                // --- PAGAR 2: Cek Titik Peta (Karena Peta gak bisa dikasih 'required') ---
-                if (!el.modalLat.value || !el.modalLng.value) {
-                    return PizzaAlert.fire('TITIK PETA KOSONG!', 'Klik di peta dulu buat nentuin lokasi pengantaran ya.', 'warning');
-                }
+                if (!form.reportValidity()) return;
+                if (!el.modalLat.value) return PizzaAlert.fire('PETA KOSONG!', 'Klik di peta dulu ya.', 'warning');
 
                 btn.disabled = true;
-                btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i> MEMPROSES...';
+                btn.innerHTML = '<i class="fas fa-spinner animate-spin fa-lg"></i>';
 
-                fetch("{{ route('user.address.store') }}", { 
+                const formData = new FormData(form);
+
+                fetch(form.action, { 
                     method: 'POST',
                     headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
-                    body: new FormData(form)
+                    body: formData
                 })
                 .then(res => res.json())
                 .then(data => {
                     btn.disabled = false;
-                    btn.innerHTML = '<span>SIMPAN & GUNAKAN</span><i class="fas fa-save"></i>';
+                    btn.innerHTML = '<span>SIMPAN & GUNAKAN</span><i class="fas fa-save text-lg"></i>';
 
                     if(data.success) {
-                        // --- FIX UNDEFINED: Gunakan Operator OR (||) sebagai Fallback ---
-                        // Kita ambil data.address.detail_address kalau ada, kalau nggak ada pakai data.address.address
-                        const displayAddress = data.address.detail_address || data.address.address || "Alamat baru";
+                        const resultAddr = data.address || data.data || {};
+                        const isEdit = document.getElementById('formMethod') && document.getElementById('formMethod').value === "PUT";
 
-                        el.lblDisplay.innerText = data.address.label;
-                        el.addrDisplay.innerText = displayAddress; 
-                        el.phoneDisplay.innerText = data.address.phone;
+                        // --- 1. UPDATE TAMPILAN HEADER CHECKOUT ---
+                        const fullDetail = (resultAddr.detail_address || resultAddr.address) + (resultAddr.city ? `, ${resultAddr.city}` : '');
+                        el.lblDisplay.innerText = resultAddr.label;
+                        el.addrDisplay.innerText = fullDetail;
+                        el.phoneDisplay.innerText = resultAddr.phone;
+
+                        // --- 2. UPDATE HIDDEN INPUT UNTUK TABEL ORDERS (PENTING!) ---
+                        el.inpAddr.value = resultAddr.address;
+                        el.inpLat.value = resultAddr.latitude;
+                        el.inpLng.value = resultAddr.longitude;
                         
-                        el.inpAddr.value = data.address.address; 
-                        el.inpLat.value = data.address.latitude;
-                        el.inpLng.value = data.address.longitude;
+                        // Update Nama & HP Penerima agar tersimpan benar di database order
+                        if(el.inpName) el.inpName.value = resultAddr.receiver_name || "{{ Auth::user()->name }}";
+                        if(el.inpPhone) el.inpPhone.value = resultAddr.phone;
 
-                        document.getElementById('modalCreateAddress').classList.add('hidden');
-                        calculateTotal();
-
-                        PizzaAlert.fire({ icon: 'success', title: 'BERHASIL!', text: 'Alamat disimpan.', timer: 1500, showConfirmButton: false });
+                        if (isEdit) {
+                            PizzaAlert.fire({ 
+                                icon: 'success', 
+                                title: 'DIPERBARUI!', 
+                                text: 'Data alamat berhasil diupdate.', 
+                                timer: 1500, 
+                                showConfirmButton: false 
+                            }).then(() => {
+                                location.reload(); 
+                            });
+                        } else {
+                            injectAddressCard(resultAddr);
+                            closeCreateAddress();
+                            calculateTotal();
+                            PizzaAlert.fire({ icon: 'success', title: 'BERHASIL!', text: 'Alamat digunakan.', timer: 1500, showConfirmButton: false });
+                        }
                     } else {
-                        PizzaAlert.fire('GAGAL!', data.message || 'Cek kembali data kamu.', 'error');
+                        PizzaAlert.fire('GAGAL!', data.message || 'Error validasi.', 'error');
                     }
                 })
                 .catch(err => {
+                    console.error(err);
                     btn.disabled = false;
-                    PizzaAlert.fire('ERROR', 'Koneksi bermasalah.', 'error');
+                    PizzaAlert.fire('ERROR', 'Terjadi kesalahan jaringan.', 'error');
                 });
             };
 
+            function injectAddressCard(addr) {
+                const listContainer = document.getElementById('address-list-container');
+                const emptyState = document.getElementById('empty-state-msg');
+                if(emptyState) emptyState.remove();
+
+                const addrJson = JSON.stringify(addr).replace(/"/g, '&quot;');
+
+                const newCardHTML = `
+                    <div class="group relative p-6 rounded-[2rem] border-4 border-gray-900 bg-red-50 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all flex justify-between items-start gap-4 mb-4 animate-fade-in">
+                        <div class="absolute -top-3 left-6 bg-brand-red text-white text-[8px] font-black uppercase px-3 py-1 rounded-md tracking-widest border-2 border-brand-red shadow-sm z-10">BARU</div>
+                        <div onclick="selectAddress(${addrJson})" class="flex-grow cursor-pointer">
+                            <span class="bg-gray-900 text-white text-[9px] font-black uppercase px-3 py-1.5 rounded-lg tracking-widest">${addr.label}</span>
+                            <p class="text-base font-bold text-gray-900 mt-4 leading-tight">${addr.address}</p>
+                            <p class="text-[10px] text-gray-400 font-black mt-2 uppercase tracking-widest italic">
+                                ${addr.city || ''} • ${addr.phone}
+                            </p>
+                        </div>
+                        <div class="flex flex-col gap-2 shrink-0">
+                            <div class="w-10 h-10 rounded-xl border-4 border-gray-900 bg-brand-red text-white flex items-center justify-center mb-auto">
+                                <i class="fas fa-check text-[10px]"></i>
+                            </div>
+                            <button onclick="editAddressInModal(event, ${addrJson})" class="w-10 h-10 rounded-xl bg-gray-100 border-2 border-transparent text-gray-400 hover:bg-white hover:text-brand-red hover:border-brand-red hover:shadow-md transition-all flex items-center justify-center z-20">
+                                <i class="fas fa-pen text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                if(listContainer) listContainer.insertAdjacentHTML('afterbegin', newCardHTML);
+            }
+
             // ==========================================
-            // 3. LOGIKA CHECKOUT LAMA (ONGKIR, PROMO, DLL)
+            // 3. LOGIKA CHECKOUT LAMA (ONGKIR, PROMO)
             // ==========================================
             
             // --- Branch Selector ---
@@ -682,26 +858,15 @@
             el.realSelect.addEventListener('change', function() {
                 const selected = this.options[this.selectedIndex];
                 if(!selected.value) return;
-
-                // Ambil data dari attribute option
                 const name = selected.text.trim();
                 const address = selected.getAttribute('data-address') || '';
-                let mapUrl = selected.getAttribute('data-map-url'); // Ambil URL dari DB jika ada
-
-                // Update Tampilan Text
+                let mapUrl = selected.getAttribute('data-map-url');
                 el.displayPickupName.innerText = name;
                 el.displayPickupAddr.innerText = address;
-
-                // Jika di database link map kosong, kita buatkan link otomatis berdasarkan Nama & Alamat
                 if (!mapUrl || mapUrl === 'null' || mapUrl === '') {
                     mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name + ' ' + address)}`;
                 }
-                
-                // Pasang link ke tombol
-                if (el.btnPickupMap) {
-                    el.btnPickupMap.href = mapUrl;
-                }
-
+                if (el.btnPickupMap) el.btnPickupMap.href = mapUrl;
                 calculateTotal();
             });
 
@@ -716,6 +881,11 @@
                 el.inpLat.value = addr.latitude;
                 el.inpLng.value = addr.longitude;
                 el.inpAddr.value = addr.address;
+
+                if(el.inpName) el.inpName.value = addr.receiver_name || "{{ Auth::user()->name }}";
+                if(el.inpPhone) el.inpPhone.value = addr.phone;
+
+
                 document.getElementById('modalAddressBook').classList.add('hidden');
                 calculateTotal(); 
             };

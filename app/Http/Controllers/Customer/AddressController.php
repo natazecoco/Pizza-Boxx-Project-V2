@@ -23,10 +23,10 @@ public function create()
             'phone'          => 'required|string|max:20',
             'map_address'    => 'required|string',         // Wajibkan dari Peta
             'address'        => 'nullable|string',         
-            'detail_address' => 'required|string',         // WAJIBKAN biar gak undefined!
+            'detail_address' => 'required|string',
             'latitude'       => 'required',
             'longitude'      => 'required',
-            'city'           => 'required|string|max:100',
+            'city'           => 'nullable|string|max:100',
             'province'       => 'nullable|string|max:100',
         ]);
     }
