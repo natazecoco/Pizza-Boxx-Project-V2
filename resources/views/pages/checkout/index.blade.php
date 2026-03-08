@@ -317,6 +317,7 @@
                                 <input type="hidden" name="delivery_fee" id="inp_fee" value="0">
                                 <input type="hidden" name="discount_amount" id="inp_discount" value="0">
                                 <input type="hidden" name="total_amount" id="inp_total" value="{{ $cartTotal }}">
+                                <input type="hidden" name="promo_code" id="inp_applied_promo" value="">
                                 <input type="hidden" name="customer_name" id="inp_name" value="{{ $user->name }}">
                                 <input type="hidden" name="customer_email" value="{{ $user->email }}">
                                 <input type="hidden" name="customer_phone" id="inp_phone" value="{{ $primaryAddress->phone ?? $user->phone_number }}">
@@ -936,6 +937,10 @@
                     el.rowFee.classList.remove('hidden');
                     el.methodCod.classList.remove('hidden');
                     el.methodPickup.classList.add('hidden');
+                    
+                    // Aktifkan radio COD
+                    el.methodCod.querySelector('input[type=radio]').checked = true;
+                    
                     calculateTotal();
                 } else {
                     el.secAddr.classList.add('hidden');
@@ -943,6 +948,15 @@
                     el.rowFee.classList.add('hidden');
                     el.methodCod.classList.add('hidden');
                     el.methodPickup.classList.remove('hidden');
+                    
+                    // ✅ FIX: Aktifkan radio cash_on_pickup
+                    el.methodPickup.querySelector('input[type=radio]').checked = true;
+                    
+                    // ✅ FIX: Kosongkan field delivery agar tidak konflik validasi
+                    el.inpAddr.value = '';
+                    el.inpLat.value = '';
+                    el.inpLng.value = '';
+                    
                     currentFee = 0;
                     updateSummary();
                     el.btn.disabled = false;
@@ -967,10 +981,12 @@
                     el.btnPromo.innerHTML = 'CEK';
                     if(data.success) {
                         currentDiscount = parseFloat(data.discount_amount) || 0;
+                        document.getElementById('inp_applied_promo').value = code;
                         el.rowDisc.classList.remove('hidden');
                         PizzaAlert.fire({ icon: 'success', title: 'Hore!', text: data.message, timer: 1500, showConfirmButton: false });
                     } else {
                         currentDiscount = 0;
+                        document.getElementById('inp_applied_promo').value = '';
                         el.rowDisc.classList.add('hidden');
                         PizzaAlert.fire({ icon: 'error', title: 'Gagal', text: data.message });
                     }
@@ -981,6 +997,15 @@
             // --- Submit Validation ---
             el.form.addEventListener('submit', function(e) {
                 e.preventDefault();
+                
+                console.log('order_type:', document.querySelector('[name=order_type]:checked')?.value);
+                console.log('payment_method:', document.querySelector('[name=payment_method]:checked')?.value);
+                console.log('location_id:', el.realSelect.value);
+                console.log('delivery_address:', el.inpAddr.value);
+                console.log('lat:', el.inpLat.value);
+                console.log('lng:', el.inpLng.value);
+                console.log('subtotal:', document.querySelector('[name=subtotal_amount]')?.value);
+                console.log('total:', el.inpTotal.value);
                 if (!el.realSelect.value) {
                     PizzaAlert.fire('PILIH OUTLET!', 'Pilih lokasi outlet dulu ya.', 'warning');
                     return;
@@ -1013,5 +1038,22 @@
             }
         });
     </script>
+    @if(session('error'))
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                icon: 'error',
+                title: 'Transaksi Dibatalkan',
+                text: @json(session('error')) ,
+                customClass: {
+                    confirmButton: 'bg-gray-900 text-white font-black uppercase italic px-8 py-4 rounded-2xl mx-2 hover:bg-brand-red transition-all text-[10px] tracking-[0.2em] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]',
+                    popup: 'rounded-[3rem] border-4 border-gray-900 shadow-2xl p-8',
+                    title: 'font-black uppercase italic text-gray-900 tracking-tighter text-2xl mb-4',
+                },
+                buttonsStyling: false
+            });
+        });
+    </script>
+    @endif
 </body>
 </html>

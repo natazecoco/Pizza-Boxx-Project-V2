@@ -133,10 +133,8 @@ class PromoResource extends Resource
                 TextColumn::make('end_date')
                     ->dateTime()
                     ->sortable()
-                    ->default('Tidak Ada')
                     ->label('Berakhir'),
                 TextColumn::make('usage_limit')
-                    ->default('Tidak Ada')
                     ->label('Batas'),
                 TextColumn::make('uses')
                     ->label('Digunakan'),
