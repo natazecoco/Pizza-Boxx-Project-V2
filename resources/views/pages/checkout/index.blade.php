@@ -132,7 +132,11 @@
                                 <select name="location_id" id="location_id" class="hidden">
                                     <option value="">-- PILIH CABANG --</option>
                                     @foreach($locations as $location)
-                                        <option value="{{ $location->id }}" data-address="{{ $location->address }}" data-map-url="{{ $location->maps_url }}">
+                                        <option value="{{ $location->id }}" 
+                                                data-address="{{ $location->address }}" 
+                                                data-map-url="{{ $location->maps_url }}"
+                                                data-lat="{{ $location->latitude }}" 
+                                                data-lng="{{ $location->longitude }}">
                                             {{ $location->name }}
                                         </option>
                                     @endforeach
@@ -785,6 +789,7 @@
                             injectAddressCard(resultAddr);
                             closeCreateAddress();
                             calculateTotal();
+                            sortBranchesByDistance();
                             PizzaAlert.fire({ icon: 'success', title: 'BERHASIL!', text: 'Alamat digunakan.', timer: 1500, showConfirmButton: false });
                         }
                     } else {
@@ -832,6 +837,69 @@
             // 3. LOGIKA CHECKOUT LAMA (ONGKIR, PROMO)
             // ==========================================
             
+            // Fungsi untuk menghitung jarak & mengurutkan cabang
+            window.sortBranchesByDistance = function() {
+                const userLat = parseFloat(el.inpLat.value);
+                const userLng = parseFloat(el.inpLng.value);
+            
+                // Jika koordinat user belum ada, jangan urutkan
+                if (!userLat || !userLng) return;
+            
+                const branches = [];
+                const options = el.realSelect.querySelectorAll('option');
+            
+                // 1. Ambil data dari elemen <select> asli
+                options.forEach(opt => {
+                    if (!opt.value) return;
+                    const lat = parseFloat(opt.getAttribute('data-lat'));
+                    const lng = parseFloat(opt.getAttribute('data-lng'));
+                    
+                    // Hitung jarak menggunakan fungsi Leaflet (hasil dalam meter)
+                    const distance = L.latLng(userLat, userLng).distanceTo(L.latLng(lat, lng));
+                    
+                    branches.push({
+                        id: opt.value,
+                        name: opt.text.trim(),
+                        address: opt.getAttribute('data-address'),
+                        lat: lat,
+                        lng: lng,
+                        distance: distance
+                    });
+                });
+            
+                // 2. Urutkan berdasarkan jarak terkecil
+                branches.sort((a, b) => a.distance - b.distance);
+            
+                // 3. Render ulang tampilan custom dropdown (#branch-options)
+                const optionsContainer = document.getElementById('branch-options');
+                optionsContainer.innerHTML = ''; // Kosongkan dulu
+            
+                branches.forEach((branch, index) => {
+                    const distKm = (branch.distance / 1000).toFixed(1);
+                    const isNearest = index === 0;
+            
+                    const branchHtml = `
+                        <div onclick="selectBranchCustom('${branch.id}', '${branch.name}', '${branch.address}')" 
+                             class="p-5 cursor-pointer hover:bg-brand-kraft border-b-2 border-gray-100 last:border-0 transition-all flex gap-4 items-center group">
+                            <div class="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center group-hover:bg-white border-2 border-transparent group-hover:border-gray-900">
+                                <i class="fas fa-map-pin ${isNearest ? 'text-brand-red' : 'text-gray-400'} group-hover:text-brand-red"></i>
+                            </div>
+                            <div class="flex-grow">
+                                <div class="flex justify-between items-start">
+                                    <h5 class="text-sm font-black text-gray-900 uppercase italic">${branch.name}</h5>
+                                    <span class="text-[9px] font-black ${isNearest ? 'bg-brand-red text-white' : 'bg-gray-100 text-gray-500'} px-2 py-0.5 rounded-full uppercase tracking-tighter">
+                                        ${distKm} KM
+                                    </span>
+                                </div>
+                                <p class="text-[10px] text-gray-500 font-bold mt-0.5">${branch.address}</p>
+                                ${isNearest ? '<p class="text-[8px] font-black text-brand-red uppercase mt-1 tracking-widest italic">Paling Dekat!</p>' : ''}
+                            </div>
+                        </div>
+                    `;
+                    optionsContainer.insertAdjacentHTML('beforeend', branchHtml);
+                });
+            };
+            
             // --- Branch Selector ---
             if(el.branchTrigger) {
                 el.branchTrigger.addEventListener('click', (e) => {
@@ -847,7 +915,8 @@
                 }
             });
             window.selectBranchCustom = function(id, name, address) {
-                el.branchNameDisplay.innerText = name;
+                const distanceBadge = event.currentTarget.querySelector('span')?.innerText || '';
+                el.branchNameDisplay.innerHTML = `${name} <span class="text-[9px] text-brand-red ml-2">${distanceBadge}</span>`;
                 el.branchOptions.classList.add('hidden');
                 el.realSelect.value = id;
                 el.realSelect.dispatchEvent(new Event('change'));
@@ -889,6 +958,7 @@
 
                 document.getElementById('modalAddressBook').classList.add('hidden');
                 calculateTotal(); 
+                sortBranchesByDistance();
             };
 
             function calculateTotal() {
@@ -1033,6 +1103,10 @@
             }
 
             // --- 7. INITIAL TRIGGER ---
+            if(el.inpLat.value) {
+                sortBranchesByDistance(); // Urutkan cabang saat halaman load jika sudah ada alamat
+            }
+            
             if(el.inpLat.value && el.realSelect.value) {
                 el.realSelect.dispatchEvent(new Event('change'));
             }

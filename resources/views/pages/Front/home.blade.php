@@ -53,7 +53,7 @@
                 <div class="flex items-center gap-4 mx-8">
                     <span class="text-white font-black italic text-xl lg:text-3xl uppercase tracking-tighter">Pizza <span class="text-brand-red">Boxx</span></span>
                     <i class="fas fa-star text-brand-kraft text-xs"></i>
-                    <span class="text-gray-400 font-black italic text-xl lg:text-3xl uppercase tracking-tighter">Keju Melimpah</span>
+                    <span class="text-brand-kraft font-black italic text-xl lg:text-3xl uppercase tracking-tighter">Keju Melimpah</span>
                     <i class="fas fa-star text-brand-kraft text-xs"></i>
                     <span class="text-white font-black italic text-xl lg:text-3xl uppercase tracking-tighter">Best Takeaway</span>
                     <i class="fas fa-star text-brand-kraft text-xs"></i>
